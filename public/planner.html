@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planner - My PW</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    .task-card {
+      transition: all 0.3s ease;
+      border: 1px solid #e5e7eb;
+    }
+    .task-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      border-color: #3b82f6;
+    }
+    .completed { text-decoration: line-through; opacity: 0.75; }
+    .modal-content { max-height: 92vh; overflow-y: auto; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <h1 class="text-3xl font-bold text-blue-600">My PW</h1>
+      <span class="text-gray-500 text-sm">Learn Like Physics Wallah</span>
+    </div>
+    <div class="flex items-center gap-6">
+      <a href="dashboard.html" class="text-gray-600 hover:text-blue-600">Dashboard</a>
+      <button onclick="logout()"
+              class="px-5 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-2xl font-medium flex items-center gap-2">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-8 py-10">
+    <div class="flex justify-between items-center mb-10">
+      <div>
+        <h2 class="text-4xl font-bold text-gray-800">Study Planner</h2>
+        <p class="text-gray-600 mt-1">Plan smart • Track daily • Stay consistent</p>
+      </div>
+      <!-- Add New Task button - Visible only to Admin -->
+      <button id="add-task-btn" onclick="showAddTaskModal()"
+              class="hidden flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium">
+        <i class="fa-solid fa-plus"></i> Add New Task
+      </button>
+    </div>
+
+    <!-- Today's Tasks -->
+    <div class="mb-12">
+      <h3 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+        <i class="fas fa-calendar-day text-blue-600"></i> Today's Tasks
+      </h3>
+      <div id="today-tasks" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </div>
+
+    <!-- Weekly Overview -->
+    <div>
+      <h3 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+        <i class="fas fa-calendar-week text-indigo-600"></i> This Week Overview
+      </h3>
+      <div id="weekly-overview" class="grid grid-cols-1 md:grid-cols-7 gap-4"></div>
+    </div>
+  </div>
+
+  <!-- Floating Button -->
+  <button onclick="showFullPlannerModal()"
+          class="fixed bottom-8 right-8 bg-gradient-to-r from-indigo-600 to-blue-600 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-3xl hover:scale-110 transition-all z-50">
+    <i class="fas fa-calendar-alt"></i>
+  </button>
+
+  <!-- Add Task Modal -->
+  <div id="add-task-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200]">
+    <div class="bg-white rounded-3xl p-8 w-full max-w-md">
+      <h3 class="text-2xl font-semibold mb-6">Add New Study Task</h3>
+      <div class="space-y-5">
+        <input id="task-title" type="text" placeholder="Task Title (e.g. Solve 50 Quant Questions)"
+               class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+        <select id="task-subject" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+          <option value="quant">Quantitative Aptitude</option>
+          <option value="reasoning">Reasoning Ability</option>
+          <option value="english">English Language</option>
+          <option value="banking">Banking Awareness</option>
+          <option value="current">Current Affairs</option>
+        </select>
+        <input id="task-deadline" type="date" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+        <select id="task-priority" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+          <option value="high">High Priority</option>
+          <option value="medium" selected>Medium Priority</option>
+          <option value="low">Low Priority</option>
+        </select>
+      </div>
+      <div class="flex gap-4 mt-8">
+        <button onclick="hideAddTaskModal()" class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium">Cancel</button>
+        <button onclick="addTask()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Add Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Detailed Planner Modal -->
+  <div id="full-planner-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4">
+    <div class="bg-white rounded-3xl w-full max-w-6xl modal-content shadow-2xl overflow-hidden">
+      <div class="sticky top-0 bg-white border-b px-8 py-5 flex justify-between items-center z-10">
+        <h2 class="text-2xl font-bold">• Bank Exam 2026 | Full Planner</h2>
+        <button onclick="hideFullPlannerModal()" class="text-4xl text-gray-400 hover:text-gray-600">×</button>
+      </div>
+      <div class="p-8 overflow-y-auto" style="max-height: calc(92vh - 80px);">
+        <div class="container mx-auto">
+          <!-- Header, Timetable, Day-by-Day Planner, Note sections remain the same -->
+          <div class="header" style="background: linear-gradient(135deg, #0f172a, #1e40af); color: white; padding: 60px 40px; text-align: center; border-radius: 20px 20px 0 0;">
+            <h1 style="font-size: 2.7rem; margin: 0 0 10px 0;"><i class="fas fa-chart-line"></i>Bank Exam 2026</h1>
+            <p style="font-size: 1.25rem; opacity: 0.95;">Full Day-by-Day Planner with 1-Hour GA/BA/CA Alternation</p>
+            <p style="margin-top: 15px;">Start: 17 April 2026 • All Basics Complete by 30 June 2026</p>
+          </div>
+
+          <div class="content" style="padding: 50px 40px;">
+            <!-- Fixed Daily Timetable (unchanged) -->
+            <h2 style="color: #0f172a; font-size: 1.8rem; margin: 45px 0 20px; padding-bottom: 12px; border-bottom: 3px solid #e0f2fe;">
+              <i class="fas fa-clock"></i> Fixed Daily Timetable
+            </h2>
+            <table style="width: 100%; border-collapse: collapse; margin: 25px 0; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.07);">
+              <tr><th style="padding:16px 12px; text-align:left; background:#1e40af; color:white;">Time</th><th style="padding:16px 12px; text-align:left; background:#1e40af; color:white;">Activity</th><th style="padding:16px 12px; text-align:left; background:#1e40af; color:white;">Details</th></tr>
+              <tr><td>5:00 – 5:30 AM</td><td>Wake + Exercise + Cold Shower</td><td>Discipline & urge control</td></tr>
+              <tr><td>5:30 – 6:00 AM</td><td>Speed Drill + Flashcards</td><td>Quant speed + 10 Vocab + 10 Idioms</td></tr>
+              <tr><td>6:00 – 8:00 AM</td><td>Quant Lecture</td><td>1 lecture at normal 1x speed + notes</td></tr>
+              <tr><td>8:00 – 9:15 AM</td><td>Editorial Live</td><td>Nimisha Bansal (mandatory)</td></tr>
+              <tr><td>9:15 – 11:00 AM</td><td>English Session</td><td>120 Rules → Grammar Granth exact order → SVA 01-03 at end + flashcards</td></tr>
+              <tr><td>11:00 – 12:30 PM</td><td>Perfection Live</td><td>Nimisha Bansal – Live only</td></tr>
+              <tr><td>1:30 – 5:00 PM</td><td>Library Solving</td><td>DPPs + PDFs + Previous Year</td></tr>
+              <tr><td>5:00 – 6:00 PM</td><td>GA/BA/CA (1 Hour Only)</td><td>Alternate: BA lecture (or part) / Current Affairs capsule + revision</td></tr>
+              <tr><td>7:00 – 8:00 PM</td><td>Reasoning Live</td><td>Sachin Adhekar</td></tr>
+              <tr><td>8:00 – 8:45 PM</td><td>Error Log + Practice</td><td>Daily review</td></tr>
+              <tr><td>9:30 – 10:00 PM</td><td>Light Revision</td><td>Formulas + flashcards</td></tr>
+              <tr><td>10:30 PM</td><td>Sleep</td><td>Strict</td></tr>
+            </table>
+
+            <!-- Detailed Day-by-Day Planner (unchanged) -->
+            <h2 style="color: #0f172a; font-size: 1.8rem; margin: 45px 0 20px; padding-bottom: 12px; border-bottom: 3px solid #e0f2fe;">
+              <i class="fas fa-calendar-check"></i> Detailed Day-by-Day Planner (17 April – 31 May 2026)
+            </h2>
+            <table style="width: 100%; border-collapse: collapse; margin: 25px 0; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.07);">
+              <tr>
+                <th style="padding:16px 12px; text-align:left; background:#1e40af; color:white;">Date</th>
+                <th style="padding:16px 12px; text-align:left; background:#1e40af; color:white;">Quant (6-8 AM)</th>
+                <th style="padding:16px 12px; text-align:left; background:#1e40af; color:white;">English (9:15-11 AM)</th>
+                <th style="padding:16px 12px; text-align:left; background:#1e40af; color:white;">Reasoning</th>
+                <th style="padding:16px 12px; text-align:left; background:#1e40af; color:white;">GA/BA/CA (5-6 PM - 1 hr)</th>
+              </tr>
+              <tr><td>17 Apr (Thu)</td><td>Lec 1: Vedic Maths 01</td><td>120 Rules Part 1-2 + Vocab/Idioms (10 each)</td><td>CH-01 Notes + Inequality (easy 40 Q)</td><td>BA: Introduction (1 hr)</td></tr>
+                <tr><td>18 Apr (Fri)</td><td>Lec 2: Vedic Maths 02</td><td>120 Rules Part 3-4 + Flashcards</td><td>CH-03 Inequality full + DPP (60 Q)</td><td>BA: Indian Banking System Part 1 (1 hr)</td></tr>
+                <tr><td>19 Apr (Sat)</td><td>Lec 3: Vedic Maths 03</td><td>120 Rules Part 5-6 + Flashcards</td><td>CH-04 Syllogism + DPP (50 Q)</td><td>CA: Jan 2026 Capsule (1 hr)</td></tr>
+                <tr class="highlight"><td>20 Apr (Sun)</td><td>Lec 4: Vedic Maths 04</td><td>120 Rules remaining + full flashcards</td><td>CH-01–04 revision + sectional mock + analysis</td><td>BA: Indian Banking System Part 2 (1 hr) + CA revision</td></tr>
+                <tr><td>21 Apr (Mon)</td><td>Lec 5: Vedic Maths 05</td><td>Grammar Granth 1: Parts of Speech + Flashcards</td><td>CH-05 Direction & Distance + DPP (50 Q)</td><td>BA: Indian Banking System Part 3 (1 hr)</td></tr>
+                <tr><td>22 Apr (Tue)</td><td>Lec 6: Simplification 01</td><td>Grammar Granth 2: Basic Concepts Grammar & Sentence Formation + Flashcards</td><td>CH-06 Coding Decoding + DPP (60 Q)</td><td>CA: Feb 2026 Capsule (1 hr)</td></tr>
+                <tr><td>23 Apr (Wed)</td><td>Lec 7: Simplification 02</td><td>Grammar Granth 3: Basic Concepts Additional Information + Flashcards</td><td>CH-07 Order & Ranking + DPP (40 Q)</td><td>BA: Indian Banking System Part 4 (1 hr)</td></tr>
+                <tr><td>24 Apr (Thu)</td><td>Lec 8: Simplification 03</td><td>Grammar Granth 4: Basic Concepts Starters + Flashcards</td><td>CH-08 Alphabets + DPP (50 Q)</td><td>CA: Mar 2026 Capsule (1 hr)</td></tr>
+                <tr><td>25 Apr (Fri)</td><td>Lec 9: Simplification 04</td><td>Grammar Granth 5: Tenses 01 + Flashcards</td><td>CH-09 Blood Relations + DPP (60 Q)</td><td>BA: RBI History Part 1 (1 hr)</td></tr>
+                <tr><td>26 Apr (Sat)</td><td>Lec 10: Simplification 05</td><td>Grammar Granth 6: Tenses 02 + Flashcards</td><td>CH-10 Input Output + DPP (50 Q)</td><td>CA: Apr 2026 Capsule (1 hr)</td></tr>
+                <tr class="highlight"><td>27 Apr (Sun)</td><td>Lec 11: Simplification 06</td><td>Grammar Granth 7: Tenses 03 + full flashcards</td><td>CH-01–10 revision + sectional mock</td><td>BA: RBI History Part 2 + CA revision (1 hr)</td></tr>
+                <tr><td>28 Apr (Mon)</td><td>Lec 12: Simplification 07</td><td>Grammar Granth 8: Active & Passive 01 + Flashcards</td><td>CH-11 Linear Arrangements start + DPP (50 Q)</td><td>BA: NABARD & PSL Part 1 (1 hr)</td></tr>
+                <tr><td>29 Apr (Tue)</td><td>Lec 13: Simplification 08</td><td>Grammar Granth 9: Active & Passive 02 + Flashcards</td><td>CH-12 Circular Arrangements + DPP (60 Q)</td><td>CA: May 2026 Capsule (1 hr)</td></tr>
+                <tr><td>30 Apr (Wed)</td><td>Lec 14: Number Series 01</td><td>Grammar Granth 10: Active & Passive 03 + Flashcards</td><td>CH-13 Square/Rectangular + DPP (60 Q)</td><td>BA: NABARD & PSL Part 2 (1 hr)</td></tr>
+                <tr><td>1 May (Thu)</td><td>Lec 15: Number Series 02</td><td>Grammar Granth 11: Narration 01 + Flashcards</td><td>CH-14 Floor Puzzle + DPP (70 Q)</td><td>CA: Revision Jan–Apr (1 hr)</td></tr>
+                <tr><td>2 May (Fri)</td><td>Lec 16: Number Series 03</td><td>Grammar Granth 12: Narration 02 + Flashcards</td><td>CH-15 Box Puzzle + DPP (60 Q)</td><td>BA: NABARD & PSL Part 3 (1 hr)</td></tr>
+                <tr><td>3 May (Sat)</td><td>Lec 17: Number Series 04</td><td>Grammar Granth 13: PYQ Narration + Flashcards</td><td>CH-16 Sequencing Puzzles + DPP (50 Q)</td><td>CA: May 2026 new capsule (1 hr)</td></tr>
+                <tr class="highlight"><td>4 May (Sun)</td><td>Lec 18: Number Series 05</td><td>Grammar Granth 14: Conditional Sentence + full flashcards</td><td>CH-15–24 revision + sectional mock</td><td>BA: NABARD & PSL Part 4 + CA revision (1 hr)</td></tr>
+                <tr><td>5 May (Mon)</td><td>Lec 19: Missing & Wrong Number Series Practice</td><td>English Perfection application + Flashcards</td><td>CH-17 Scheduling Weekday Puzzles + DPP (50 Q)</td><td>CA: June 2026 Capsule (1 hr)</td></tr>
+                <tr><td>6 May (Tue)</td><td>Lec 20: Linear, Quadratic & Cubic Equations 01</td><td>English Perfection application + Flashcards</td><td>CH-18 Scheduling Month Based + DPP (60 Q)</td><td>BA: Remaining BA (1 hr)</td></tr>
+                <tr><td>7 May (Wed)</td><td>Lec 21: Linear, Quadratic & Cubic Equations 02</td><td>English Perfection application + Flashcards</td><td>CH-19 Scheduling Year Based + DPP (50 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>8 May (Thu)</td><td>Lec 22: Linear, Quadratic & Cubic Equations 03</td><td>English Perfection application + Flashcards</td><td>CH-20 Tabular Puzzles + DPP (60 Q)</td><td>BA: Remaining BA (1 hr)</td></tr>
+                <tr><td>9 May (Fri)</td><td>Lec 23: Linear, Quadratic & Cubic Equations 04</td><td>English Perfection application + Flashcards</td><td>CH-21 HOT Category Flat/Floor + DPP (50 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>10 May (Sat)</td><td>Lec 24: Linear, Quadratic & Cubic Equations 05</td><td>English Perfection application + Flashcards</td><td>CH-22 HOT Category Uncertain Seating + DPP (60 Q)</td><td>BA + CA revision (1 hr)</td></tr>
+                <tr class="highlight"><td>11 May (Sun)</td><td>Lec 25: Percentage 01</td><td>English Perfection application + Flashcards</td><td>CH-23 HOT Category Designation Based + DPP (50 Q)</td><td>CA weekly revision + mock analysis (1 hr)</td></tr>
+                <tr><td>12 May (Mon)</td><td>Lec 26: Percentage 02</td><td>English Perfection application + Flashcards</td><td>CH-24 Triangular Arrangements + DPP (60 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>13 May (Tue)</td><td>Lec 27: Percentage 03</td><td>English Perfection application + Flashcards</td><td>CH-25 Input Output Mains + DPP (50 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>14 May (Wed)</td><td>Lec 28: Percentage 04</td><td>English Perfection application + Flashcards</td><td>CH-26 Inequality Mains + DPP (60 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>15 May (Thu)</td><td>Lec 29: Percentage 05</td><td>English Perfection application + Flashcards</td><td>CH-27 Syllogism Mains + DPP (50 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>16 May (Fri)</td><td>Lec 30: Ratio & Proportion</td><td>English Perfection application + Flashcards</td><td>CH-28 Direction & Distance Mains + DPP (60 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>17 May (Sat)</td><td>Lec 31: Problem on Ages</td><td>English Perfection application + Flashcards</td><td>CH-29 Coding Decoding Mains + DPP (50 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr class="highlight"><td>18 May (Sun)</td><td>Lec 32: Mixture & Alligation</td><td>English Perfection application + Flashcards</td><td>CH-30 Order & Ranking Mains + DPP (60 Q)</td><td>CA weekly revision + mock analysis (1 hr)</td></tr>
+                <tr><td>19 May (Mon)</td><td>Lec 33: Profit & Loss 01</td><td>English Perfection application + Flashcards</td><td>CH-31 Alphabets Mains + DPP (50 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>20 May (Tue)</td><td>Lec 34: Profit & Loss 02</td><td>English Perfection application + Flashcards</td><td>CH-32 Blood Relations Mains + DPP (60 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>21 May (Wed)</td><td>Lec 35: Profit & Loss 03</td><td>English Perfection application + Flashcards</td><td>CH-33 Data Sufficiency Mains + DPP (50 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>22 May (Thu)</td><td>Lec 36: Time & Work 01</td><td>English Perfection application + Flashcards</td><td>CH-34 Analytical Reasoning Mains + DPP (60 Q)</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>23 May (Fri)</td><td>Lec 37: Time & Work 02</td><td>English Perfection application + Flashcards</td><td>CH-35 Mains Level Puzzles Lec 1</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr><td>24 May (Sat)</td><td>Lec 38: Time & Work 03</td><td>English Perfection application + Flashcards</td><td>Mains Level Puzzles Lec 2</td><td>CA: Latest capsule (1 hr)</td></tr>
+                <tr class="highlight"><td>25 May (Sun)</td><td>Lec 39: Boat & Stream</td><td>English Perfection application + Flashcards</td><td>Mains Level Puzzles Lec 3 + sectional mock</td><td>CA weekly revision + mock analysis (1 hr)</td></tr>
+            </table>
+
+            <div class="note" style="background:#f0f9ff; border-left:6px solid #3b82f6; padding:22px; border-radius:12px; margin:30px 0;">
+              <strong>1 June – 30 June 2026 (Weekly Targets)</strong><br>
+              • Quant: 1 lecture per day (finish remaining lectures – Arithmetic, DI, Caselets by 30 June)<br>
+              • English: Heavy Perfection application + daily flashcards (SVA 01, 02, 03 in this period)<br>
+              • Reasoning: Finish Mains level chapters + last 10-lecture chapter<br>
+              • GA/BA/CA: 1 hour daily alternating any remaining BA and Current Affairs capsules + Sunday weekly revision<br>
+              • Practice: 80–120 questions/day + 4–5 full mocks per week in July
+            </div>
+
+            <!-- Daily Progress Form -->
+            <h2 style="color: #0f172a; font-size: 1.8rem; margin: 45px 0 20px; padding-bottom: 12px; border-bottom: 3px solid #e0f2fe;">
+                <i class="fas fa-edit"></i> Daily Progress Form
+                <span style="font-size: 0.85rem; color: #64748b; font-weight: 500; margin-left: 8px;">(for AI only)</span>
+            </h2>
+            <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #f1f5f9;">
+              <form id="progressForm" class="space-y-8">
+                <!-- Your professional form fields remain unchanged -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                    <input type="date" id="date" required class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Energy Level (1-10)</label>
+                    <input type="number" id="energy" min="1" max="10" placeholder="8" required class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                  </div>
+                </div>
+                <!-- ... rest of the form fields ... -->
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Quant (Lecture # and Title)</label>
+                  <input type="text" id="quant" placeholder="e.g. Lec 1: Vedic Maths 01 – Full, Notes made" required class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">English (What you covered)</label>
+                  <input type="text" id="english" placeholder="e.g. Grammar Granth 2: Basic Concepts + Flashcards" required class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Perfection Class</label>
+                    <select id="perfection" class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                      <option value="Yes">Attended Live (Yes)</option>
+                      <option value="No">Missed (No)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Streak (No masturbation)</label>
+                    <input type="text" id="streak" placeholder="e.g. Day 5 (clean)" required class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Reasoning (Chapter + DPP)</label>
+                  <input type="text" id="reasoning" placeholder="e.g. CH-03 Inequality + 60 Q (easy-moderate)" required class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Library Solving</label>
+                  <input type="text" id="library" placeholder="e.g. Quant 60Q + Reasoning 50Q + English 30Q + PDFs" required class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">GA/BA/CA (1 hr - What done)</label>
+                  <input type="text" id="ga" placeholder="e.g. BA: Monetary Policy Part 1 or CA Jan Capsule" required class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-2xl px-5 py-4 text-base">
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Any Issue / Doubt (optional)</label>
+                  <textarea id="issue" rows="3" placeholder="Optional..." class="w-full border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-3xl px-5 py-4 text-base resize-y"></textarea>
+                </div>
+
+                <button type="button" onclick="submitUpdate()"
+                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-5 rounded-2xl font-semibold text-lg shadow-lg transition-all">
+                  Submit Update & Copy to Clipboard
+                </button>
+              </form>
+              <div id="updateSummary" class="mt-8"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let tasks = [];
+    let isAdmin = false;
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        if (!res.ok) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const data = await res.json();
+        isAdmin = data.user && data.user.role === 'admin';
+
+        // Show Add Task button only to admin
+        const addBtn = document.getElementById('add-task-btn');
+        if (addBtn) addBtn.classList.toggle('hidden', !isAdmin);
+      } catch (err) {
+        window.location.href = 'login.html';
+      }
+    }
+
+    function loadTasks() {
+      tasks = JSON.parse(localStorage.getItem('plannerTasks')) || [];
+      renderTodayTasks();
+      renderWeeklyOverview();
+    }
+
+    function renderTodayTasks() {
+      const container = document.getElementById('today-tasks');
+      const today = new Date().toISOString().split('T')[0];
+      const todayTasks = tasks.filter(t => t.deadline === today);
+
+      let html = '';
+      if (todayTasks.length === 0) {
+        html = `<p class="col-span-2 text-center text-gray-500 py-12">No tasks scheduled for today.<br><span class="text-sm">Add tasks to stay on track!</span></p>`;
+      } else {
+        todayTasks.forEach((task, globalIndex) => {
+          const showDelete = isAdmin ? `
+            <button onclick="deleteTask(${globalIndex})" class="text-red-500 hover:text-red-700 transition-colors">
+              <i class="fas fa-trash"></i>
+            </button>` : '';
+
+          html += `
+            <div class="task-card bg-white rounded-3xl p-6 border ${task.completed ? 'border-green-200' : 'border-gray-100'}">
+              <div class="flex items-start justify-between">
+                <div class="${task.completed ? 'completed' : ''}">
+                  <p class="font-semibold text-lg">${task.title}</p>
+                  <p class="text-sm text-gray-500">${task.subject} • ${task.priority}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <input type="checkbox" ${task.completed ? 'checked' : ''}
+                         onchange="toggleTask(${globalIndex})" class="w-6 h-6 accent-blue-600">
+                  ${showDelete}
+                </div>
+              </div>
+            </div>`;
+        });
+      }
+      container.innerHTML = html;
+    }
+
+    function renderWeeklyOverview() {
+      const container = document.getElementById('weekly-overview');
+      let html = '';
+      const today = new Date();
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayName = date.toLocaleString('default', { weekday: 'short' });
+        const dayTasks = tasks.filter(t => t.deadline === dateStr);
+        const completed = dayTasks.filter(t => t.completed).length;
+
+        html += `
+          <div class="bg-white rounded-3xl p-5 text-center border border-gray-100">
+            <p class="text-xs text-gray-500">${dayName}</p>
+            <p class="text-3xl font-bold text-gray-800 mt-1">${date.getDate()}</p>
+            <p class="text-sm mt-3 ${completed === dayTasks.length && dayTasks.length > 0 ? 'text-green-600' : 'text-gray-500'}">
+              ${completed}/${dayTasks.length}
+            </p>
+          </div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function showAddTaskModal() {
+      if (!isAdmin) return alert("Only admins can add tasks.");
+      document.getElementById('add-task-modal').classList.remove('hidden');
+    }
+
+    function hideAddTaskModal() {
+      document.getElementById('add-task-modal').classList.add('hidden');
+    }
+
+    function addTask() {
+      const title = document.getElementById('task-title').value.trim();
+      const subject = document.getElementById('task-subject').value;
+      const deadline = document.getElementById('task-deadline').value;
+      const priority = document.getElementById('task-priority').value;
+
+      if (!title || !deadline) {
+        alert("Please enter task title and deadline");
+        return;
+      }
+
+      tasks.push({ title, subject, deadline, priority, completed: false });
+      localStorage.setItem('plannerTasks', JSON.stringify(tasks));
+      hideAddTaskModal();
+      loadTasks();
+    }
+
+    function toggleTask(index) {
+      tasks[index].completed = !tasks[index].completed;
+      localStorage.setItem('plannerTasks', JSON.stringify(tasks));
+      loadTasks();
+    }
+
+    function deleteTask(index) {
+      if (!isAdmin) return;
+      if (confirm("Delete this task?")) {
+        tasks.splice(index, 1);
+        localStorage.setItem('plannerTasks', JSON.stringify(tasks));
+        loadTasks();
+      }
+    }
+
+    function showFullPlannerModal() {
+      document.getElementById('full-planner-modal').classList.remove('hidden');
+    }
+
+    function hideFullPlannerModal() {
+      document.getElementById('full-planner-modal').classList.add('hidden');
+    }
+
+    function submitUpdate() {
+      const date = document.getElementById('date').value || new Date().toISOString().split('T')[0];
+      const quant = document.getElementById('quant').value.trim();
+      const english = document.getElementById('english').value.trim();
+      const perfection = document.getElementById('perfection').value;
+      const reasoning = document.getElementById('reasoning').value.trim();
+      const library = document.getElementById('library').value.trim();
+      const ga = document.getElementById('ga').value.trim();
+      const streak = document.getElementById('streak').value.trim();
+      const energy = document.getElementById('energy').value || 'N/A';
+      const issue = document.getElementById('issue').value.trim() || 'None';
+
+      const summaryText = `Date: ${date}
+Quant: ${quant || 'Not filled'}
+English: ${english || 'Not filled'}
+Perfection: Live attended (${perfection})
+Reasoning: ${reasoning || 'Not filled'}
+Library solving: ${library || 'Not filled'}
+GA/BA/CA: ${ga || 'Not filled'}
+Streak: ${streak}
+Energy: ${energy}/10
+Issue/Doubt: ${issue}`;
+
+      document.getElementById('updateSummary').innerHTML = `
+        <div style="background:#ecfdf5; padding:24px; border-radius:16px; border-left:5px solid #10b981;">
+          <h3 style="color:#065f46; margin-bottom:12px;">✅ Today's Update Ready</h3>
+          <pre style="background:white; padding:20px; border-radius:12px; white-space: pre-wrap; font-family: system-ui; border:1px solid #d1fae5;">${summaryText}</pre>
+          <p style="margin-top:12px; color:#065f46; font-weight:500;">✅ Copied to clipboard! Paste it in the chat with Grok for review and tomorrow's targets.</p>
+        </div>
+      `;
+
+      navigator.clipboard.writeText(summaryText);
+    }
+
+    async function logout() {
+      if (!confirm("Are you sure you want to logout?")) return;
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = 'login.html';
+    }
+
+    window.onload = async () => {
+      await checkAuth();
+      loadTasks();
+    };
+  </script>
+</body>
+</html>

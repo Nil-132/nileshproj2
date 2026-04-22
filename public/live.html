@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Classes - My PW</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    .live-card { transition: all 0.3s ease; }
+    .live-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+    .live-dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .tab-active {
+      background-color: #2563eb !important;
+      color: white !important;
+    }
+    .modal-content {
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <h1 class="text-3xl font-bold text-blue-600">My PW</h1>
+      <span class="text-gray-500 text-sm">Learn Like Physics Wallah</span>
+    </div>
+    <div class="flex items-center gap-6">
+      <a href="dashboard.html" class="text-gray-600 hover:text-blue-600">Dashboard</a>
+      <button id="add-btn" onclick="showAddModal()"
+              class="hidden flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-2xl text-sm font-medium">
+        <i class="fa-solid fa-plus"></i> Add Schedule
+      </button>
+      <button onclick="logout()"
+              class="px-5 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-2xl font-medium flex items-center gap-2">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-8 py-10">
+    <h2 class="text-4xl font-bold text-gray-800 mb-2">Live Classes</h2>
+    <p class="text-gray-600 mb-8">Today's Live Sessions</p>
+
+    <!-- Category Tabs -->
+    <div class="flex flex-wrap gap-2 mb-8 border-b pb-4" id="category-tabs">
+      <!-- Populated by JS -->
+    </div>
+
+    <div id="live-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- Professional Add Schedule Modal -->
+  <div id="add-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200] p-4">
+    <div class="bg-white rounded-3xl w-full max-w-lg modal-content shadow-2xl">
+      <div class="p-8">
+        <h3 class="text-2xl font-semibold mb-6 text-center text-gray-800">Add New Live Schedule</h3>
+
+        <!-- Error Message Area (Visible inside modal) -->
+        <div id="modal-error" class="hidden mb-6 bg-red-50 border border-red-300 text-red-700 px-5 py-4 rounded-2xl text-sm">
+          <!-- Error message will be inserted here -->
+        </div>
+
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Lecture Title <span class="text-red-500">*</span></label>
+            <input id="add-title" type="text" placeholder="Enter lecture title"
+                   class="w-full border border-gray-300 rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Category <span class="text-red-500">*</span></label>
+            <select id="add-category" class="w-full border border-gray-300 rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600">
+              <option value="banking">Banking</option>
+              <option value="quant">Quant</option>
+              <option value="english">English</option>
+              <option value="reasoning">Reasoning</option>
+              <option value="current">Current Affairs</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Date <span class="text-red-500">*</span></label>
+              <input id="add-date" type="date" class="w-full border border-gray-300 rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Time <span class="text-red-500">*</span></label>
+              <input id="add-time" type="time" class="w-full border border-gray-300 rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Duration <span class="text-red-500">*</span></label>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <input id="add-hours" type="number" min="0" max="8" placeholder="00"
+                       class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-center focus:outline-none focus:border-blue-600">
+                <p class="text-xs text-gray-500 text-center mt-1">Hours</p>
+              </div>
+              <div>
+                <input id="add-minutes" type="number" min="0" max="59" placeholder="00"
+                       class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-center focus:outline-none focus:border-blue-600">
+                <p class="text-xs text-gray-500 text-center mt-1">Minutes</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">YouTube Video ID (optional)</label>
+            <input id="add-youtube" type="text" placeholder="e.g. dQw4w9wgxcq"
+                   class="w-full border border-gray-300 rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600">
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t p-6 flex gap-4 sticky bottom-0 bg-white rounded-b-3xl">
+        <button onclick="hideAddModal()"
+                class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium hover:bg-gray-50">
+          Cancel
+        </button>
+        <button onclick="addLiveSchedule()"
+                class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold">
+          Add Schedule
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast (for success only) -->
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-2xl shadow-2xl text-white"></div>
+
+  <script>
+    let isAdmin = false;
+    let currentCategory = 'all';
+
+    async function checkAdmin() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success && data.user.role === 'admin') {
+          isAdmin = true;
+          document.getElementById('add-btn').classList.remove('hidden');
+        }
+      } catch (e) {}
+    }
+
+    async function loadLiveClasses(category = 'all') {
+      currentCategory = category;
+      const today = new Date().toISOString().split('T')[0];
+
+      try {
+        const res = await fetch(`/api/live/today?date=${today}`, { credentials: 'include' });
+        let lives = await res.json();
+
+        if (category !== 'all') lives = lives.filter(l => l.category === category);
+
+        let html = '';
+        if (lives.length === 0) {
+          html = `<p class="col-span-3 text-center text-gray-500 py-20">No live classes scheduled for today.</p>`;
+        } else {
+          lives.forEach(live => {
+            const hours = Math.floor((live.duration || 45) / 60);
+            const minutes = (live.duration || 45) % 60;
+            const durationStr = hours > 0 ? `${hours} hr ${minutes} min` : `${minutes} min`;
+
+            const startTime = new Date(`${live.date} ${live.time}`);
+            const endTime = new Date(startTime.getTime() + (live.duration || 45) * 60000);
+            const now = new Date();
+
+            let buttonHTML = '';
+            let status = '';
+
+            if (now < startTime) status = 'Upcoming';
+            else if (now >= startTime && now <= endTime) status = 'LIVE';
+            else status = 'Completed';
+
+            let btnHTML = '';
+            if (status === 'Upcoming') btnHTML = `<button onclick="notifyMe('${live.title}')" class="w-full py-3.5 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-medium">Notify Me</button>`;
+            else if (status === 'LIVE') btnHTML = `<button onclick="joinLive('${live.youtubeId || '#'}')" class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-medium flex items-center justify-center gap-2"><span class="live-dot w-3 h-3 bg-white rounded-full"></span> Join Live Now</button>`;
+            else btnHTML = `<button onclick="watchRecorded('${live.youtubeId || '#'}')" class="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-medium">Watch Recording</button>`;
+
+            html += `
+              <div class="live-card bg-white rounded-3xl shadow-xl p-6 border border-gray-100">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <span class="px-4 py-1 text-xs font-medium rounded-2xl ${status === 'LIVE' ? 'bg-red-100 text-red-700' : status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                      ${status}
+                    </span>
+                    <h4 class="font-semibold text-lg mt-4">${live.title}</h4>
+                    <p class="text-sm text-gray-500">${live.time} • ${durationStr}</p>
+                  </div>
+                  ${isAdmin ? `<button onclick="deleteLive('${live._id}')" class="text-red-500 hover:text-red-700 text-xl"><i class="fas fa-trash"></i></button>` : ''}
+                </div>
+                <div class="mt-8">${btnHTML}</div>
+              </div>`;
+          });
+        }
+
+        document.getElementById('live-container').innerHTML = html;
+        renderCategoryTabs();
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderCategoryTabs() {
+      const categories = ['all', 'banking', 'quant', 'english', 'reasoning', 'current'];
+      let html = `<button onclick="filterCategory('all')" class="tab px-6 py-2 rounded-3xl text-sm font-medium ${currentCategory === 'all' ? 'tab-active bg-blue-600 text-white' : 'bg-white border'}">All</button>`;
+      categories.slice(1).forEach(cat => {
+        html += `<button onclick="filterCategory('${cat}')" class="tab px-6 py-2 bg-white hover:bg-gray-100 text-gray-700 rounded-3xl text-sm font-medium border ${currentCategory === cat ? 'tab-active bg-blue-600 text-white' : ''}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`;
+      });
+      document.getElementById('category-tabs').innerHTML = html;
+    }
+
+    function filterCategory(cat) {
+      loadLiveClasses(cat);
+    }
+
+    function showAddModal() {
+      document.getElementById('add-modal').classList.remove('hidden');
+      document.getElementById('modal-error').classList.add('hidden');
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('add-date').value = today;
+      document.getElementById('add-hours').value = '';
+      document.getElementById('add-minutes').value = '';
+    }
+
+    function hideAddModal() {
+      document.getElementById('add-modal').classList.add('hidden');
+    }
+
+    function showModalError(msg) {
+      const errorDiv = document.getElementById('modal-error');
+      errorDiv.textContent = msg;
+      errorDiv.classList.remove('hidden');
+      errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function addLiveSchedule() {
+      const title = document.getElementById('add-title').value.trim();
+      const category = document.getElementById('add-category').value;
+      const date = document.getElementById('add-date').value;
+      const time = document.getElementById('add-time').value;
+      const hours = parseInt(document.getElementById('add-hours').value) || 0;
+      const minutes = parseInt(document.getElementById('add-minutes').value) || 0;
+      const youtubeId = document.getElementById('add-youtube').value.trim();
+
+      const totalDuration = (hours * 60) + minutes;
+
+      // Clear previous error
+      document.getElementById('modal-error').classList.add('hidden');
+
+      if (!title) {
+        showModalError("⚠️ Please enter the lecture title");
+        return;
+      }
+      if (!date || !time) {
+        showModalError("⚠️ Please select date and time");
+        return;
+      }
+      if (totalDuration <= 0) {
+        showModalError("⚠️ Please specify duration (Hours or Minutes)");
+        return;
+      }
+
+      const scheduledTime = new Date(`${date} ${time}`);
+      if (scheduledTime < new Date()) {
+        showModalError("⚠️ You cannot schedule a live class in the past!");
+        return;
+      }
+
+      try {
+        await fetch('/api/live', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, category, date, time, duration: totalDuration, youtubeId }),
+          credentials: 'include'
+        });
+        hideAddModal();
+        loadLiveClasses(currentCategory);
+        showToast("✅ Live schedule added successfully!", true);
+      } catch (err) {
+        showToast("❌ Failed to add schedule", false);
+      }
+    }
+
+    async function deleteLive(id) {
+      if (!confirm("Delete this live schedule?")) return;
+      try {
+        await fetch(`/api/live/${id}`, { method: 'DELETE', credentials: 'include' });
+        loadLiveClasses(currentCategory);
+        showToast("✅ Schedule deleted successfully!", true);
+      } catch (err) {
+        showToast("❌ Failed to delete schedule", false);
+      }
+    }
+
+    function showToast(message, isSuccess = true) {
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3.5 rounded-2xl shadow-2xl text-white flex items-center gap-2 ${isSuccess ? 'bg-green-600' : 'bg-red-600'}`;
+      toast.innerHTML = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    function notifyMe(title) { showToast(`🛎️ You will be notified when "${title}" starts!`, true); }
+    function joinLive(link) { if (link && link !== '#') window.open(link, '_blank'); else showToast("Live link will be available shortly!", true); }
+    function watchRecorded(youtubeId) { if (youtubeId && youtubeId !== '#') window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank'); else showToast("Recording will be available soon.", true); }
+
+    async function logout() {
+      if (!confirm("Are you sure you want to logout?")) return;
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = 'login.html';
+    }
+
+    window.onload = async () => {
+      await checkAdmin();
+      renderCategoryTabs();
+      loadLiveClasses('all');
+      setInterval(() => loadLiveClasses(currentCategory), 30000);
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPP Practice</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --pw-blue: #0087fd;
+            --pw-dark-blue: #232a58;
+            --bg-gray: #f7f8fc;
+            --diff-easy: #2fb138;
+            --diff-medium: #aa7722;
+            --diff-hard: #d93025;
+            --status-green: #2fb138;
+            --status-red: #ea5033;
+            --status-na: #6c757d;
+            --status-bg-box: #e9ecf5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-gray);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #test-interface {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: white;
+            padding: 0 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            height: 60px;
+            z-index: 100;
+        }
+
+        #timer-box {
+            font-size: 0.95rem;
+            color: #444;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        #timer-box::before {
+            content: '\23F1';
+            margin-right: 6px;
+            font-size: 1.1rem;
+        }
+
+        .pw-btn-style {
+            background: white;
+            color: var(--pw-blue);
+            border: 1.5px solid var(--pw-blue);
+            padding: 8px 22px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .pw-btn-style:hover {
+            background: #e8f0fe;
+        }
+
+        #main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #q-area {
+            flex: 1;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            margin: 15px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            overflow-y: auto;
+            transition: margin 0.3s ease;
+        }
+
+        #sidebar-container {
+            display: flex;
+            position: relative;
+            transition: width 0.3s ease;
+        }
+
+        #right-sidebar {
+            width: 340px;
+            background: #fff;
+            border-left: 1px solid #ddd;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, width 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        #sidebar-toggle {
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 48px;
+            background: #eff4ff;
+            color: var(--pw-dark-blue);
+            border: 1px solid #ccd5f0;
+            border-radius: 8px 0 0 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        #sidebar-container.collapsed #right-sidebar {
+            width: 0;
+            padding: 0;
+            transform: translateX(100%);
+            border-left: none;
+        }
+
+        #sidebar-container.collapsed #sidebar-toggle {
+            border-radius: 8px;
+            left: -30px;
+        }
+
+        @media (max-width: 768px) {
+            #right-sidebar { width: 260px; }
+            header { padding: 0 15px; }
+            #q-area { margin: 10px; padding: 15px; }
+            .pal-grid { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+
+        #q-num-box {
+            background: #eff1f5;
+            color: var(--pw-dark-blue);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        #date-badge {
+            font-size: 0.75rem;
+            color: #666;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-weight: normal;
+        }
+
+        .option {
+            border: 1px solid #dee2e6;
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .correct {
+            border-color: var(--status-green) !important;
+            background: #f1fff2 !important;
+            border-width: 2px !important;
+        }
+
+        .wrong {
+            border-color: var(--status-red) !important;
+            background: #fff1f1 !important;
+            border-width: 2px !important;
+        }
+
+        #summary-card {
+            background: var(--status-bg-box);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 15px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #444;
+        }
+
+        .stat-count {
+            width: 32px;
+            height: 26px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .pal-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+
+        .pal-btn {
+            aspect-ratio: 1.1;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .pal-btn.active {
+            border: 2.5px solid var(--pw-blue);
+            background: #fff;
+        }
+
+        .res-correct {
+            border: 1.5px solid var(--status-green) !important;
+            color: var(--status-green) !important;
+            background: #f1fff2;
+        }
+
+        .res-wrong {
+            border: 1.5px solid var(--status-red) !important;
+            color: var(--status-red) !important;
+            background: #fff1f1;
+        }
+
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #submit-modal {
+            background: white;
+            width: 90%;
+            max-width: 420px;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        #modal-stats-box {
+            background: #f8f9fc;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            border: 1px solid #eee;
+        }
+
+        .modal-stat-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        #result-page {
+            display: none;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow-y: auto;
+            background: var(--bg-gray);
+        }
+
+        .result-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+
+        .score-display {
+            text-align: center;
+        }
+
+        .score-big {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--pw-blue);
+            margin: 10px 0;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .analysis-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+
+        .analysis-val {
+            font-size: 1.3rem;
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+            color: var(--pw-dark-blue);
+        }
+
+        #lecture-selector-section {
+            position: fixed;
+            top: 70px;
+            left: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 15px;
+            z-index: 200;
+            min-width: 250px;
+            display: none;
+        }
+
+        #lecture-selector-section.show {
+            display: block;
+        }
+
+        #current-lecture-badge {
+            background: #e8f0fe;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--pw-blue);
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="test-interface">
+    <header>
+        <div style="display: flex; align-items: center;">
+            <button class="pw-btn-style" onclick="window.location.href='/dashboard.html'">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </button>
+            <span id="current-lecture-badge"></span>
+            <button id="change-lecture-btn" class="pw-btn-style ml-3 text-sm" style="display: none;">
+                <i class="fas fa-exchange-alt mr-1"></i>Change Lecture
+            </button>
+        </div>
+        <div id="timer-box"><span id="timer-display">00:00:00</span></div>
+        <button class="pw-btn-style" onclick="showSubmitModal()">Submit DPP</button>
+    </header>
+
+    <div id="main">
+        <div id="q-area">
+            <div id="q-header" style="display:flex; align-items:center; margin-bottom:15px;">
+                <div id="q-num-box">1</div>
+                <div id="difficulty-label" style="font-weight:bold;">MEDIUM</div>
+                <div id="date-badge"></div>
+            </div>
+            <div id="q-text" style="font-size:1.05rem; line-height:1.6; margin-bottom:20px; white-space:pre-wrap; color:#222;">Loading questions...</div>
+            <div id="options"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:15px; border-top:1px solid #eee;">
+                <button class="pw-btn-style" id="prev-btn" onclick="nav(-1)">Previous</button>
+                <button class="pw-btn-style" id="next-btn" onclick="nav(1)">Next</button>
+            </div>
+        </div>
+
+        <div id="sidebar-container">
+            <button id="sidebar-toggle" onclick="toggleSidebar()">❯</button>
+            <div id="right-sidebar">
+                <div id="summary-card">
+                    <div class="stat-row"><div class="stat-count" style="background:var(--status-green);" id="count-correct">0</div>Correct</div>
+                    <div class="stat-row"><div class="stat-count" style="background:var(--status-red);" id="count-incorrect">0</div>Incorrect</div>
+                    <div class="stat-row" style="margin-bottom:0;"><div class="stat-count" style="background:var(--status-na);" id="count-na">0</div>Not Answered</div>
+                </div>
+                <h4 style="margin:0 0 10px 0; color:var(--pw-dark-blue);">Question Palette</h4>
+                <div class="pal-grid" id="pal-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lecture Selector Dropdown -->
+<div id="lecture-selector-section">
+    <div class="flex justify-between items-center mb-3">
+        <h3 class="font-semibold text-gray-700">Select Lecture</h3>
+        <button onclick="hideLectureSelector()" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <select id="lecture-select" class="w-full p-2 border rounded">
+        <option value="">-- Choose a lecture --</option>
+    </select>
+</div>
+
+<!-- Submit Modal -->
+<div id="modal-overlay">
+    <div id="submit-modal">
+        <div class="modal-icon">📝</div>
+        <h3 style="margin:10px 0; color:var(--pw-dark-blue);">Submit DPP</h3>
+        <p style="color:#666; font-size:0.9rem;">Are you sure you want to submit the DPP?</p>
+        <div id="modal-stats-box">
+            <div class="modal-stat-line"><span>Total Questions</span><span id="m-total">0</span></div>
+            <div class="modal-stat-line" style="color:var(--status-green)"><span>● Correct</span><span id="m-correct">0</span></div>
+            <div class="modal-stat-line" style="color:var(--status-red)"><span>● Incorrect</span><span id="m-incorrect">0</span></div>
+            <div class="modal-stat-line" style="color:var(--status-na)"><span>● Not Answered</span><span id="m-na">0</span></div>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <button class="pw-btn-style" style="flex:1" onclick="hideSubmitModal()">Resume</button>
+            <button class="pw-btn-style" style="flex:1; background:var(--pw-blue); color:white; border:none;" onclick="finalSubmit()">Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- Result Page -->
+<div id="result-page">
+    <div class="result-container">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <h2 style="margin:0; color:var(--pw-dark-blue);" id="result-lecture-name">DPP Results</h2>
+                    <p style="color:#666; margin:5px 0;"><span id="dash-q-count">0</span> Questions</p>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="pw-btn-style" onclick="reattemptDpp()">Reattempt</button>
+                    <a href="/dashboard.html" class="pw-btn-style">Home</a>
+                </div>
+            </div>
+        </div>
+        <div class="card score-display">
+            <p style="font-weight:bold; color:#666; letter-spacing:1px; margin:0;">YOUR SCORE</p>
+            <div class="score-big"><span id="final-score">0</span><span style="font-size:1.5rem; color:#999;"> / <span id="final-total">0</span></span></div>
+        </div>
+        <div class="analysis-grid">
+            <div class="analysis-card"><span>CORRECT</span><span class="analysis-val" style="color:var(--status-green)" id="res-c">0</span></div>
+            <div class="analysis-card"><span>INCORRECT</span><span class="analysis-val" style="color:var(--status-red)" id="res-i">0</span></div>
+            <div class="analysis-card"><span>SKIPPED</span><span class="analysis-val" id="res-s">0</span></div>
+            <div class="analysis-card"><span>ACCURACY</span><span class="analysis-val" id="res-acc">0%</span></div>
+            <div class="analysis-card"><span>TIME</span><span class="analysis-val" id="res-time">00:00:00</span></div>
+        </div>
+        <div class="card mt-4">
+            <h3 style="margin-top:0;">Progress Trend</h3>
+            <canvas id="progressChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- GLOBAL STATE ----------
+    let questions = [];
+    let currentDpp = null;
+    let current = 0;
+    let userAnswers = [];
+    let states = [];
+    let timers = [];
+    let timerInterval;
+    let userId = null;
+    let allLectures = [];
+    let currentLectureId = null;
+    let chartInstance = null;
+    let testStartTime = Date.now();
+    let totalTestSeconds = 0;
+
+    const testInterface = document.getElementById('test-interface');
+    const resultPage = document.getElementById('result-page');
+    const lectureSelector = document.getElementById('lecture-selector-section');
+    const lectureSelect = document.getElementById('lecture-select');
+    const changeLectureBtn = document.getElementById('change-lecture-btn');
+    const currentLectureBadge = document.getElementById('current-lecture-badge');
+
+    // ---------- INIT ----------
+    (async function init() {
+        await fetchUser();
+        await loadAllLectures();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLectureId = urlParams.get('lectureId');
+
+        if (urlLectureId) {
+            currentLectureId = urlLectureId;
+            changeLectureBtn.style.display = 'inline-block';
+            await loadDpp(currentLectureId);
+        } else {
+            showLectureSelector();
+        }
+    })();
+
+    async function fetchUser() {
+        try {
+            const res = await fetch('/api/me', { credentials: 'include' });
+            if (res.status === 401) {
+                window.location.href = '/login.html';
+                return;
+            }
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.user) {
+                    userId = data.user.id || data.user._id;
+                    console.log('User ID set:', userId);
+                } else {
+                    console.warn('User data missing in response:', data);
+                }
+            } else {
+                console.error('Failed to fetch user:', res.status);
+            }
+        } catch (e) {
+            console.error('Error fetching user:', e);
+        }
+    }
+
+    async function loadAllLectures() {
+        try {
+            const res = await fetch('/api/dpp/lectures');
+            if (!res.ok) throw new Error('Failed to load lectures');
+            allLectures = await res.json();
+            allLectures.forEach(lec => {
+                const option = document.createElement('option');
+                option.value = lec.lectureId;
+                option.textContent = `${lec.lectureName} ${lec.subject ? `(${lec.subject})` : ''}`;
+                lectureSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading lectures:', error);
+        }
+    }
+
+    async function loadDpp(lectureId) {
+        if (!lectureId) return;
+
+        document.getElementById('q-text').innerText = 'Loading questions...';
+        document.getElementById('options').innerHTML = '';
+
+        try {
+            const res = await fetch(`/api/dpp/${lectureId}`);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    alert('No DPP found for this lecture.');
+                    showLectureSelector();
+                }
+                throw new Error('Failed to load DPP');
+            }
+            const dpp = await res.json();
+            currentDpp = dpp;
+            currentLectureId = dpp.lectureId;
+
+            questions = dpp.questions.map((q, idx) => ({
+                id: q.id,
+                text: q.questionText,
+                options: q.options,
+                ans: q.correctAnswer,
+                diff: q.difficulty || 'MEDIUM',
+                date: q.date || ''
+            }));
+
+            userAnswers = new Array(questions.length).fill(null);
+            states = new Array(questions.length).fill('unanswered');
+            timers = new Array(questions.length).fill(0);
+            current = 0;
+
+            currentLectureBadge.textContent = dpp.lectureName;
+            lectureSelector.classList.remove('show');
+            changeLectureBtn.style.display = 'inline-block';
+
+            renderQuestion();
+            updatePalette();
+            startTimer();
+            testStartTime = Date.now();
+
+            document.getElementById('q-area').style.display = 'flex';
+        } catch (error) {
+            console.error('Error loading DPP:', error);
+            alert('Error loading DPP. Please try again.');
+        }
+    }
+
+    function renderQuestion() {
+        if (!questions.length) return;
+        const q = questions[current];
+        document.getElementById('q-num-box').innerText = current + 1;
+        document.getElementById('q-text').innerText = q.text;
+        document.getElementById('date-badge').innerText = q.date ? `PYQ ${q.date}` : '';
+        const label = document.getElementById('difficulty-label');
+        label.innerText = q.diff;
+        label.style.color = q.diff === 'HARD' ? 'var(--diff-hard)' : (q.diff === 'EASY' ? 'var(--diff-easy)' : 'var(--diff-medium)');
+
+        const optDiv = document.getElementById('options');
+        optDiv.innerHTML = '';
+
+        q.options.forEach((opt, i) => {
+            const div = document.createElement('div');
+            div.className = 'option';
+            if (states[current] === 'checked') {
+                div.style.pointerEvents = 'none';
+                if (i === q.ans) div.classList.add('correct');
+                else if (userAnswers[current] === i) div.classList.add('wrong');
+            }
+            div.innerText = (i + 1) + ". " + opt;
+            div.onclick = () => {
+                if (states[current] !== 'checked') {
+                    userAnswers[current] = i;
+                    states[current] = 'checked';
+                    renderQuestion();
+                    updatePalette();
+                }
+            };
+            optDiv.appendChild(div);
+        });
+
+        document.getElementById('prev-btn').disabled = (current === 0);
+        document.getElementById('next-btn').disabled = (current === questions.length - 1);
+    }
+
+    function updatePalette() {
+        const grid = document.getElementById('pal-grid');
+        grid.innerHTML = '';
+        let c = 0, inc = 0, chk = 0;
+
+        questions.forEach((q, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'pal-btn';
+            if (i === current) btn.classList.add('active');
+
+            if (states[i] === 'checked') {
+                chk++;
+                if (userAnswers[i] === q.ans) {
+                    btn.classList.add('res-correct');
+                    c++;
+                } else {
+                    btn.classList.add('res-wrong');
+                    inc++;
+                }
+            }
+
+            btn.innerText = i + 1;
+            btn.onclick = () => {
+                current = i;
+                renderQuestion();
+                updatePalette();
+            };
+            grid.appendChild(btn);
+        });
+
+        document.getElementById('count-correct').innerText = c;
+        document.getElementById('count-incorrect').innerText = inc;
+        document.getElementById('count-na').innerText = questions.length - chk;
+    }
+
+    function nav(delta) {
+        const newIdx = current + delta;
+        if (newIdx >= 0 && newIdx < questions.length) {
+            current = newIdx;
+            renderQuestion();
+            updatePalette();
+        }
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (states[current] !== 'checked') timers[current]++;
+            let t = timers[current];
+            let h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+            document.getElementById('timer-display').innerText = 
+                `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }, 1000);
+    }
+
+    function toggleSidebar() {
+        const container = document.getElementById('sidebar-container');
+        const btn = document.getElementById('sidebar-toggle');
+        const isCollapsed = container.classList.toggle('collapsed');
+        btn.innerText = isCollapsed ? '❮' : '❯';
+    }
+
+    function showLectureSelector() {
+        lectureSelector.classList.add('show');
+        testInterface.style.opacity = '0.5';
+        testInterface.style.pointerEvents = 'none';
+    }
+
+    function hideLectureSelector() {
+        lectureSelector.classList.remove('show');
+        testInterface.style.opacity = '1';
+        testInterface.style.pointerEvents = 'auto';
+    }
+
+    lectureSelect.addEventListener('change', (e) => {
+        const newId = e.target.value;
+        if (newId) {
+            currentLectureId = newId;
+            hideLectureSelector();
+            loadDpp(newId);
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('lectureId', newId);
+            window.history.pushState({}, '', newUrl);
+        }
+    });
+
+    changeLectureBtn.addEventListener('click', () => {
+        showLectureSelector();
+        lectureSelect.value = currentLectureId || '';
+    });
+
+    function showSubmitModal() {
+        document.getElementById('m-total').innerText = questions.length;
+        document.getElementById('m-correct').innerText = document.getElementById('count-correct').innerText;
+        document.getElementById('m-incorrect').innerText = document.getElementById('count-incorrect').innerText;
+        document.getElementById('m-na').innerText = document.getElementById('count-na').innerText;
+        document.getElementById('modal-overlay').style.display = 'flex';
+    }
+
+    function hideSubmitModal() {
+        document.getElementById('modal-overlay').style.display = 'none';
+    }
+
+    async function finalSubmit() {
+        if (!userId) {
+            alert('You must be logged in to submit. Please log in again.');
+            window.location.href = '/login.html';
+            return;
+        }
+
+        totalTestSeconds = Math.floor((Date.now() - testStartTime) / 1000);
+
+        const answers = questions.map((q, i) => ({
+            questionId: q.id,
+            selectedOption: userAnswers[i] !== null ? userAnswers[i] : -1,
+            timeSpent: timers[i]
+        }));
+
+        const submitBtn = document.querySelector('#submit-modal .pw-btn-style:last-child');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+
+        try {
+            const res = await fetch('/api/dpp/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lectureId: currentDpp.lectureId,
+                    lectureName: currentDpp.lectureName,
+                    answers
+                }),
+                credentials: 'include'
+            });
+
+            if (res.status === 401) {
+                alert('Your session has expired. Please log in again.');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Submission failed');
+
+            if (data.success) {
+                displayResultPage(data.result);
+            }
+        } catch (error) {
+            console.error('Submission error:', error);
+            alert('Failed to submit: ' + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Submit';
+            hideSubmitModal();
+        }
+    }
+
+    function displayResultPage(result) {
+        testInterface.style.display = 'none';
+        resultPage.style.display = 'block';
+
+        const correct = result.correctCount;
+        const total = result.totalQuestions;
+        let inc = 0, unatt = 0;
+        states.forEach((s, i) => {
+            if (s === 'checked') {
+                if (userAnswers[i] !== questions[i].ans) inc++;
+            } else {
+                unatt++;
+            }
+        });
+
+        document.getElementById('result-lecture-name').innerText = currentDpp.lectureName;
+        document.getElementById('dash-q-count').innerText = total;
+        document.getElementById('final-score').innerText = correct;
+        document.getElementById('final-total').innerText = total;
+
+        document.getElementById('res-c').innerText = correct;
+        document.getElementById('res-i').innerText = inc;
+        document.getElementById('res-s').innerText = unatt;
+        const attempted = correct + inc;
+        document.getElementById('res-acc').innerText = attempted > 0 ? Math.round((correct / attempted) * 100) + "%" : "0%";
+
+        let h = Math.floor(totalTestSeconds / 3600), m = Math.floor((totalTestSeconds % 3600) / 60), s = totalTestSeconds % 60;
+        document.getElementById('res-time').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+        loadProgressGraph(currentDpp.lectureId);
+    }
+
+    async function loadProgressGraph(lectureId) {
+        try {
+            const res = await fetch(`/api/dpp/analytics/${lectureId}`, { credentials: 'include' });
+            if (!res.ok) return;
+            const analytics = await res.json();
+            const attempts = analytics.attempts || [];
+            if (attempts.length === 0) return;
+
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const labels = attempts.map((_, i) => `Attempt ${i+1}`);
+            const scores = attempts.map(a => a.score);
+
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score (%)',
+                        data: scores,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+        } catch (err) {
+            console.warn('Could not load progress graph', err);
+        }
+    }
+
+    function reattemptDpp() {
+        resultPage.style.display = 'none';
+        testInterface.style.display = 'flex';
+        loadDpp(currentLectureId);
+        testStartTime = Date.now();
+    }
+
+    // Expose global functions
+    window.toggleSidebar = toggleSidebar;
+    window.nav = nav;
+    window.showSubmitModal = showSubmitModal;
+    window.hideSubmitModal = hideSubmitModal;
+    window.finalSubmit = finalSubmit;
+    window.showLectureSelector = showLectureSelector;
+    window.hideLectureSelector = hideLectureSelector;
+    window.reattemptDpp = reattemptDpp;
+</script>
+</body>
+</html>

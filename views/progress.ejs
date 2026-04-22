@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Report - <%= user.name || 'Student' %></title>
+    
+    <!-- Your existing CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Chart.js for DPP graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Optional: Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* Additional styles for DPP section */
+        .dpp-analytics {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .dpp-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .dpp-table th, .dpp-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .dpp-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        .score-good { color: #10b981; }
+        .score-average { color: #f59e0b; }
+        .score-poor { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    
+    <div class="container">
+        <h1>Your Progress Report</h1>
+        
+        <!-- Your existing progress content goes here -->
+        <div class="existing-progress">
+            <!-- e.g., overall attendance, marks, etc. -->
+        </div>
+        
+        <!-- DPP Performance Section (NEW) -->
+        <% if (typeof user !== 'undefined' && user._id) { %>
+        <div class="dpp-analytics">
+            <h2 style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <i class="fas fa-chart-line" style="color: #2563eb;"></i>
+                DPP Performance
+            </h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <!-- Chart Column -->
+                <div>
+                    <h3 style="font-weight: 500; margin-bottom: 1rem;">Score Trend (Last 10 Attempts)</h3>
+                    <canvas id="dppOverallChart" style="width: 100%; height: 200px;"></canvas>
+                    <p id="no-data-message-chart" style="color: #6b7280; text-align: center; display: none;">
+                        Complete DPPs to see your progress chart
+                    </p>
+                </div>
+                
+                <!-- Recent Attempts Table Column -->
+                <div>
+                    <h3 style="font-weight: 500; margin-bottom: 1rem;">Recent DPP Attempts</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="dpp-table">
+                            <thead>
+                                <tr>
+                                    <th>Lecture</th>
+                                    <th>Score</th>
+                                    <th>Date</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="dpp-history-body">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 2rem; color: #6b7280;">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="no-data-message-table" style="color: #6b7280; text-align: center; display: none;">
+                        No DPP attempts yet. Start practicing!
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Link to DPP Viewer -->
+            <div style="margin-top: 1.5rem; text-align: right;">
+                <a href="/dpp-viewer.html" style="color: #2563eb; text-decoration: none;">
+                    <i class="fas fa-external-link-alt"></i> Go to DPP Practice
+                </a>
+            </div>
+        </div>
+        <% } %>
+        
+        <!-- Rest of your existing content -->
+    </div>
+    
+    <%- include('partials/footer') %>
+    
+    <script>
+        // DPP Analytics Script
+        (async function loadDppAnalytics() {
+            const userId = '<%= user._id %>';
+            const tableBody = document.getElementById('dpp-history-body');
+            const noDataTable = document.getElementById('no-data-message-table');
+            const noDataChart = document.getElementById('no-data-message-chart');
+            const chartCanvas = document.getElementById('dppOverallChart');
+            
+            try {
+                const response = await fetch('/api/dpp/results');
+                if (!response.ok) throw new Error('Failed to fetch DPP results');
+                
+                const results = await response.json();
+                
+                // Handle empty state
+                if (!results || results.length === 0) {
+                    tableBody.innerHTML = '';
+                    noDataTable.style.display = 'block';
+                    noDataChart.style.display = 'block';
+                    chartCanvas.style.display = 'none';
+                    return;
+                }
+                
+                noDataTable.style.display = 'none';
+                noDataChart.style.display = 'none';
+                chartCanvas.style.display = 'block';
+                
+                // Populate table with recent 10 attempts
+                tableBody.innerHTML = '';
+                const recentAttempts = results.slice(0, 10);
+                
+                recentAttempts.forEach(attempt => {
+                    const row = document.createElement('tr');
+                    
+                    // Score class for color coding
+                    let scoreClass = 'score-poor';
+                    if (attempt.score >= 80) scoreClass = 'score-good';
+                    else if (attempt.score >= 60) scoreClass = 'score-average';
+                    
+                    const date = new Date(attempt.submittedAt).toLocaleDateString('en-IN', {
+                        day: '2-digit', month: 'short', year: 'numeric'
+                    });
+                    
+                    row.innerHTML = `
+                        <td>${attempt.lectureName}</td>
+                        <td class="${scoreClass}"><strong>${attempt.score.toFixed(1)}%</strong> (${attempt.correctAnswers}/${attempt.totalQuestions})</td>
+                        <td>${date}</td>
+                        <td>
+                            <a href="/dpp-viewer.html?lectureId=${attempt.lectureId}" 
+                               style="color: #2563eb; text-decoration: none;">
+                                Retry <i class="fas fa-redo-alt"></i>
+                            </a>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Draw chart with last 10 attempts in chronological order
+                const chartData = [...recentAttempts].reverse(); // oldest to newest
+                
+                const ctx = chartCanvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.map(a => {
+                            const d = new Date(a.submittedAt);
+                            return `${d.getDate()}/${d.getMonth()+1}`;
+                        }),
+                        datasets: [{
+                            label: 'Score (%)',
+                            data: chartData.map(a => a.score),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            tension: 0.2,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: (context) => {
+                                        const idx = context.dataIndex;
+                                        const att = chartData[idx];
+                                        return `Correct: ${att.correctAnswers}/${att.totalQuestions}`;
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: {
+                                    color: '#e5e7eb'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('DPP analytics error:', error);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 2rem; color: #ef4444;">
+                            <i class="fas fa-exclamation-triangle"></i> Error loading DPP data
+                        </td>
+                    </tr>
+                `;
+            }
+        })();
+    </script>
+</body>
+</html>

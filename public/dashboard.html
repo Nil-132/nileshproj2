@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - My PW</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    .card-hover {
+      transition: all 0.3s;
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <!-- Top Navbar -->
+  <nav class="bg-white shadow-md px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <h1 class="text-3xl font-bold text-blue-600">My PW</h1>
+      <span class="text-gray-500 text-sm">Learn Like Physics Wallah</span>
+    </div>
+    <div class="flex items-center gap-6">
+      <div id="userInfo" class="text-right">
+        <p id="userName" class="font-semibold text-gray-800"></p>
+        <p id="userRole" class="text-xs text-gray-500"></p>
+      </div>
+      <button onclick="logout()"
+              class="px-5 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-2xl font-medium flex items-center gap-2">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-8 py-10">
+    <div id="welcome" class="mb-10">
+      <h2 class="text-4xl font-bold text-gray-800">Welcome back, <span id="welcomeName" class="text-blue-600"></span>! 👋</h2>
+      <p class="text-gray-600 mt-2">Continue your learning journey</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div class="bg-white rounded-3xl shadow-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm">Total Lectures</p>
+            <p id="totalLectures" class="text-4xl font-bold text-blue-600 mt-1">0</p>
+          </div>
+          <i class="fas fa-play-circle text-5xl text-blue-200"></i>
+        </div>
+      </div>
+      <div class="bg-white rounded-3xl shadow-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm">Completed</p>
+            <p id="completedLectures" class="text-4xl font-bold text-green-600 mt-1">0</p>
+          </div>
+          <i class="fas fa-check-circle text-5xl text-green-200"></i>
+        </div>
+      </div>
+      <div class="bg-white rounded-3xl shadow-xl p-6 card-hover">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm">Live Today</p>
+            <p id="liveClasses" class="text-4xl font-bold text-purple-600 mt-1">0</p>
+          </div>
+          <i class="fas fa-video text-5xl text-purple-200"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Navigation Cards - New Order -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <!-- 1. Live Classes -->
+      <a href="live.html" class="bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center text-center card-hover">
+        <i class="fas fa-video text-6xl text-purple-600 mb-4"></i>
+        <h3 class="text-xl font-semibold">Live Classes</h3>
+        <p class="text-gray-500 mt-2">Join live sessions</p>
+      </a>
+
+      <!-- 2. Subjects -->
+      <a href="subjects.html" class="bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center text-center card-hover">
+        <i class="fas fa-book text-6xl text-blue-600 mb-4"></i>
+        <h3 class="text-xl font-semibold">Subjects</h3>
+        <p class="text-gray-500 mt-2">Banking • Quant • English • Reasoning</p>
+      </a>
+
+      <!-- 3. My Progress -->
+      <a href="progress.html" class="bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center text-center card-hover">
+        <i class="fas fa-chart-bar text-6xl text-green-600 mb-4"></i>
+        <h3 class="text-xl font-semibold">My Progress</h3>
+        <p class="text-gray-500 mt-2">Track your completion</p>
+      </a>
+
+      <!-- 4. Planner -->
+      <a href="planner.html" class="bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center text-center card-hover">
+        <i class="fas fa-calendar-alt text-6xl text-indigo-600 mb-4"></i>
+        <h3 class="text-xl font-semibold">Planner</h3>
+        <p class="text-gray-500 mt-2">Study plan & schedule</p>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Motivation Popup Modal -->
+<div id="motivation-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[300]">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-md mx-4 text-center transform transition-all">
+    <div class="text-6xl mb-4">🔥</div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">
+      Week <span id="popup-week">1</span>, Day <span id="popup-day">1</span>
+    </h2>
+    <p id="popup-message" class="text-gray-600 text-lg mb-6">You can do it! 💪</p>
+    <button onclick="closeMotivationPopup()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold transition">
+      Let's Go!
+    </button>
+  </div>
+</div>
+
+  <script>
+    async function loadDashboard() {
+      try {
+        // Get user info
+        const userRes = await fetch('/api/me', { credentials: 'include' });
+        if (!userRes.ok) throw new Error();
+        const userData = await userRes.json();
+        if (!userData.success) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        document.getElementById('userName').textContent = userData.user.name || 'Student';
+        document.getElementById('userRole').textContent = userData.user.role === 'admin' ? 'Admin' : 'Student';
+        document.getElementById('welcomeName').textContent = (userData.user.name || 'Student').split(' ')[0];
+
+        // Real Stats
+        const lecturesRes = await fetch('/api/lectures', { credentials: 'include' });
+        const lectures = await lecturesRes.json();
+        const total = lectures.length;
+        const completed = lectures.filter(l => l.completed === true).length;
+
+        document.getElementById('totalLectures').textContent = total;
+        document.getElementById('completedLectures').textContent = completed;
+
+        // Live Today Count
+        const today = new Date().toISOString().split('T')[0];
+        const liveRes = await fetch(`/api/live/today?date=${today}`, { credentials: 'include' });
+        const liveData = await liveRes.json();
+        const liveToday = Array.isArray(liveData) ? liveData.length : 0;
+        document.getElementById('liveClasses').textContent = liveToday;
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('totalLectures').textContent = '0';
+        document.getElementById('completedLectures').textContent = '0';
+        document.getElementById('liveClasses').textContent = '0';
+      }
+    }
+
+    async function showMotivationPopup() {
+  try {
+    const res = await fetch('/api/motivation/current', { credentials: 'include' });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('popup-week').textContent = data.weekNumber;
+      document.getElementById('popup-day').textContent = data.dayNumber;
+      document.getElementById('popup-message').textContent = data.message;
+      document.getElementById('motivation-modal').classList.remove('hidden');
+    }
+    // If no active schedule or not started, simply don't show the popup
+  } catch (err) {
+    console.error('Motivation popup error:', err);
+  }
+}
+
+function closeMotivationPopup() {
+  document.getElementById('motivation-modal').classList.add('hidden');
+}
+
+    async function logout() {
+      if (!confirm("Are you sure you want to logout?")) return;
+      try {
+        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+      } catch (e) {}
+      window.location.href = 'login.html';
+    }
+
+    window.onload = async () => {
+  await loadDashboard();
+  showMotivationPopup();
+};
+  </script>
+</body>
+</html>

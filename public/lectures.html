@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Lectures - Project02</title>
+  <link rel="manifest" href="/manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    /* All existing styles (unchanged - keep your current CSS) */
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    .chapter-item:hover { background-color: #f8fafc; }
+    .active-chapter {
+      background-color: #e0f2fe;
+      border-left: 4px solid #3b82f6;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .lecture-card { transition: all 0.3s ease; }
+    .lecture-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+    .sidebar {
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        width: 280px;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.15);
+      }
+      .sidebar.open { transform: translateX(280px); }
+    }
+    .modal-content { max-height: 85vh; overflow-y: auto; }
+    .manage-btn {
+      transition: all 0.2s ease;
+      border: 1px solid #d1d5db;
+      background: white;
+      color: #374151;
+    }
+    .manage-btn:hover { background-color: #f3f4f6; transform: translateY(-1px); }
+    .manage-btn-active {
+      background-color: #e5e7eb;
+      font-weight: 600;
+      border: 1px solid #9ca3af;
+    }
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background: #1f2937;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 200px;
+      animation: slideIn 0.3s ease;
+      backdrop-filter: blur(8px);
+      border-left: 4px solid;
+    }
+    .toast.success { border-left-color: #10b981; }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.info { border-left-color: #3b82f6; }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .video-modal-overlay {
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 300;
+    }
+    .player-card {
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(12px);
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: 0 25px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.15);
+      width: 90%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+    }
+    @media (max-width: 640px) {
+      .player-card { width: 98%; border-radius: 1rem; }
+    }
+    .video-stage {
+      aspect-ratio: 16 / 9;
+      background: #000;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .center-play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px;
+      height: 80px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2.5rem;
+      border: 2px solid rgba(255,255,255,0.3);
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 25;
+      opacity: 0;
+    }
+    .custom-controls {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+      padding: 14px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      opacity: 1;
+      visibility: visible;
+      min-height: 70px;
+    }
+    .custom-controls.hide-controls {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .player-card:fullscreen .custom-controls {
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+    }
+    .ctrl-btn {
+      background: transparent;
+      border: none;
+      color: #f0f0f0;
+      width: 44px;
+      height: 44px;
+      border-radius: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 1.3rem;
+    }
+    .ctrl-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+    .ctrl-btn:active { transform: scale(0.96); }
+    .progress-bar-bg {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: height 0.1s;
+    }
+    .progress-bar-bg:hover { height: 10px; background: rgba(255,255,255,0.5); }
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff4757, #ff6b81);
+      border-radius: 8px;
+      pointer-events: none;
+    }
+    .time-display {
+      font-family: monospace;
+      font-size: 1rem;
+      background: rgba(0,0,0,0.6);
+      padding: 6px 12px;
+      border-radius: 24px;
+      letter-spacing: 0.5px;
+      color: #fff;
+      font-weight: 500;
+    }
+    .volume-slider {
+      width: 90px;
+      height: 5px;
+      -webkit-appearance: none;
+      background: rgba(255,255,255,0.3);
+      border-radius: 5px;
+      outline: none;
+      cursor: pointer;
+    }
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #ff6b81;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 2px white;
+    }
+    .speed-dropdown, .quality-dropdown {
+      background: rgba(0,0,0,0.8);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 32px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+      backdrop-filter: blur(4px);
+    }
+    .speed-dropdown option, .quality-dropdown option {
+      background: #1f2937;
+      color: white;
+    }
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top: 4px solid #ff6b81;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 640px) {
+      .ctrl-btn { width: 48px; height: 48px; font-size: 1.4rem; }
+      .progress-bar-bg { height: 6px; }
+      .volume-slider { width: 70px; }
+      .speed-dropdown, .quality-dropdown { padding: 6px 10px; font-size: 0.8rem; }
+      .time-display { font-size: 0.8rem; padding: 4px 8px; }
+      .custom-controls { padding: 12px 12px; gap: 12px; min-height: 60px; }
+    }
+    .manage-form-container {
+      border: none;
+      padding: 1rem;
+      background: white;
+      margin-top: 0.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .manage-form-container input, .manage-form-container select {
+      border: 1px solid #e2e8f0;
+      outline: none;
+      box-shadow: none;
+      transition: none;
+    }
+    .manage-form-container input:focus, .manage-form-container select:focus {
+      outline: none;
+      box-shadow: none;
+      border-color: #e2e8f0;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+<!-- Overlay -->
+<div id="overlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/50 z-50 md:hidden"></div>
+
+<div class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <div class="sidebar w-72 bg-white border-r border-gray-200 overflow-y-auto" id="sidebar">
+    <div class="p-6">
+      <a href="/subjects.html" class="flex items-center gap-2 text-xl font-semibold text-gray-800 hover:text-blue-600 mb-8">← Subjects</a>
+      <div class="px-6 py-4 text-xs font-medium text-gray-500">CHAPTERS</div>
+      <div class="px-3 space-y-0.5" id="chapters-list"></div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="bg-white border-b px-4 md:px-8 py-5 flex justify-between items-center">
+  <div class="flex items-center gap-3">
+    <button onclick="toggleSidebar()" class="md:hidden text-3xl text-gray-700"><i class="fa-solid fa-bars"></i></button>
+    <h1 class="text-2xl font-semibold" id="subject-title">All Classes</h1>
+  </div>
+  <div class="flex items-center gap-4">
+    <button id="installBtn" class="hidden flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-download"></i> Install as App</button>
+    <button id="admin-login-btn" onclick="showLoginModal()" class="hidden flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-lock"></i> Admin Login</button>
+    <button id="manage-btn" onclick="showManageModal()" class="hidden flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium"><i class="fa-solid fa-plus"></i> Manage</button>
+    <button onclick="logout()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+  </div>
+</div>
+
+    <div class="bg-white border-b px-4 md:px-8 py-4 flex gap-4 items-center">
+      <div class="relative flex-1">
+        <input type="text" id="search-input" placeholder="Search lectures by title..." onkeyup="applyFilters()" class="w-full border border-gray-300 rounded-2xl px-5 py-3 pl-12 focus:outline-none focus:border-blue-500">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      </div>
+      <select id="filter-select" onchange="applyFilters()" class="border border-gray-300 rounded-2xl px-5 py-3 focus:outline-none">
+        <option value="all">All Lectures</option>
+        <option value="completed">Completed</option>
+        <option value="pending">Not Completed</option>
+      </select>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-4 md:p-8" id="main-content"></div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Notes Modal -->
+<div id="notes-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200]">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-sm mx-4">
+    <h3 class="text-xl font-semibold mb-6 text-center">What do you want to open?</h3>
+    <div class="space-y-3">
+      <button onclick="openPdf()" class="w-full py-4 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white rounded-2xl font-medium flex items-center justify-center gap-3">📄 Class PDF (Notes)</button>
+      <button onclick="openDpp()" class="w-full py-4 border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-2xl font-medium flex items-center justify-center gap-3">📝 DPP</button>
+    </div>
+    <button onclick="hideNotesModal()" class="w-full mt-6 py-3 text-gray-500 hover:text-gray-700 font-medium">Cancel</button>
+  </div>
+</div>
+
+<!-- Manage Modal -->
+<div id="manage-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-lg mx-4 modal-content">
+    <h2 class="text-2xl font-semibold mb-6">Manage Content</h2>
+    <div class="grid grid-cols-2 gap-4 mb-8">
+      <button onclick="setManageMode(1)" id="btn1" class="manage-btn py-4 rounded-2xl font-medium manage-btn-active">Add Chapter</button>
+      <button onclick="setManageMode(2)" id="btn2" class="manage-btn py-4 rounded-2xl font-medium">Add Lecture</button>
+      <button onclick="setManageMode(3)" id="btn3" class="manage-btn py-4 rounded-2xl font-medium">Delete Chapter</button>
+      <button onclick="setManageMode(4)" id="btn4" class="manage-btn py-4 rounded-2xl font-medium">Delete Lecture</button>
+      <button onclick="setManageMode(5)" id="btn5" class="manage-btn py-4 rounded-2xl font-medium col-span-2">Update Lecture (Add Notes/DPP)</button>
+    </div>
+    <div id="form1" class="manage-form-container"><input id="chapter-title" type="text" placeholder="New Chapter Title" class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-lg"></div>
+    <div id="form2" class="manage-form-container hidden space-y-4">
+      <select id="lecture-chapter-select" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></select>
+      <input id="lecture-title" type="text" placeholder="Lecture Title" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      <div class="grid grid-cols-2 gap-4">
+        <input id="lecture-date" type="date" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+        <input id="lecture-duration" type="text" placeholder="Duration (e.g. 52m)" value="45m" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      </div>
+      <input id="lecture-youtube" type="text" placeholder="YouTube Video ID" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      <input id="lecture-image" type="text" placeholder="Instructor Image URL (optional)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      <input id="lecture-pdf" type="text" placeholder="Class PDF Link (Google Drive)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      <input id="lecture-dpp" type="text" placeholder="DPP Link (Google Drive)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+    </div>
+    <div id="form3" class="manage-form-container hidden"><select id="delete-chapter-select" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></select></div>
+    <div id="form4" class="manage-form-container hidden space-y-4">
+      <select id="delete-lecture-chapter" onchange="updateDeleteLectureOptions()" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></select>
+      <select id="delete-lecture-select" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></select>
+    </div>
+    <div id="form5" class="manage-form-container hidden space-y-4">
+      <select id="update-lecture-chapter" onchange="populateUpdateLectureSelect()" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></select>
+      <select id="update-lecture-select" onchange="loadLectureForUpdate()" class="w-full border border-gray-300 rounded-2xl px-5 py-4"></select>
+      <input id="update-title" type="text" placeholder="Lecture Title (optional)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      <input id="update-youtube" type="text" placeholder="YouTube Video ID (optional)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      <input id="update-image" type="text" placeholder="Instructor Image URL (optional)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      <input id="update-pdf" type="text" placeholder="Class PDF Link (Google Drive)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+      <input id="update-dpp" type="text" placeholder="DPP Link (Google Drive)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
+    </div>
+    <div class="flex gap-4 mt-8">
+      <button onclick="hideManageModal()" class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium">Cancel</button>
+      <button onclick="executeManageAction()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Confirm Action</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Login Modal -->
+<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-sm mx-4">
+    <h3 class="text-xl font-semibold mb-4">Admin Login</h3>
+    <p class="text-gray-600 mb-6">Use your admin account</p>
+    <input type="email" id="adminEmail" placeholder="Admin Email" value="your_email" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-3">
+    <input type="password" id="adminPass" placeholder="Password" value="your_password" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-6">
+    <div class="flex gap-3">
+      <button onclick="hideLoginModal()" class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium">Cancel</button>
+      <button onclick="adminLogin()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Login as Admin</button>
+    </div>
+  </div>
+</div>
+
+<!-- Advanced Video Player Modal - with fresh iframe recreation -->
+<div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
+  <div class="player-card w-full max-w-5xl">
+    <div class="video-stage relative" id="videoStageContainer">
+      <!-- iframe will be dynamically created here -->
+      <div id="videoOverlay" class="absolute inset-0 z-20 cursor-pointer"></div>
+      <div id="centerPlayIcon" class="center-play-icon"><i class="fas fa-play"></i></div>
+      <div id="messagePanel" class="absolute inset-0 bg-black/80 backdrop-blur-xl z-40 flex items-center justify-center flex-col gap-4 text-white hidden">
+        <div class="loading-spinner"></div>
+        <div id="errorText">Loading video ...</div>
+      </div>
+    </div>
+    <div class="custom-controls" id="customControls">
+      <button class="ctrl-btn" id="playPauseBtn"><i class="fas fa-pause"></i></button>
+      <div class="flex-1 flex items-center gap-3 min-w-[120px]">
+        <div class="progress-bar-bg" id="progressBarBg"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+      </div>
+      <div class="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full">
+        <button class="ctrl-btn w-8 h-8" id="volumeBtn"><i class="fas fa-volume-up"></i></button>
+        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="70">
+      </div>
+      <select id="speedDropdown" class="speed-dropdown">
+        <option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+      </select>
+      <select id="qualityDropdown" class="quality-dropdown">
+        <option value="auto">Auto</option>
+        <option value="144p">144p</option><option value="240p">240p</option><option value="360p">360p</option>
+        <option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option>
+      </select>
+      <button class="ctrl-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></button>
+      <button class="ctrl-btn ml-auto text-white bg-white/10 rounded-full w-8 h-8" id="closeVideoModal"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== TOAST NOTIFICATIONS ==========
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i> ${message}`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ========== PWA INSTALL BUTTON ==========
+let deferredPrompt = null;
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.classList.remove('hidden');
+});
+installBtn.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') showToast('App installed successfully!', 'success');
+    else showToast('Installation cancelled', 'info');
+    deferredPrompt = null;
+    installBtn.classList.add('hidden');
+  } else showToast('Your browser does not support automatic installation.', 'info');
+});
+window.addEventListener('appinstalled', () => { installBtn.classList.add('hidden'); deferredPrompt = null; });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed', err));
+  });
+}
+
+// ========== YOUR ORIGINAL APP LOGIC ==========
+const urlParams = new URLSearchParams(window.location.search);
+const subjectId = urlParams.get('subjectId');
+const subjectName = urlParams.get('subjectName') || 'All Classes';
+document.getElementById('subject-title').textContent = subjectName;
+
+let currentChapterId = null;
+let manageMode = 1;
+let isAdmin = false;
+let allLectures = [];
+let currentPdfLink = '';
+let currentDppLink = '';
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/me', { credentials: 'include' });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    if (data.success) {
+      if (data.user.role === 'admin') {
+        document.getElementById('manage-btn').classList.remove('hidden');
+        document.getElementById('admin-login-btn').classList.add('hidden');
+        isAdmin = true;
+      } else {
+        // Student logged in - show admin login button
+        document.getElementById('admin-login-btn').classList.remove('hidden');
+      }
+    } else {
+      // Not logged in - show admin login button
+      document.getElementById('admin-login-btn').classList.remove('hidden');
+    }
+  } catch (err) { 
+    // Not logged in - show admin login button
+    document.getElementById('admin-login-btn').classList.remove('hidden');
+  }
+}
+
+function showLoginModal() {
+  document.getElementById('loginModal').classList.remove('hidden');
+}
+
+async function logout() {
+  if (!confirm("Are you sure you want to logout?")) return;
+  await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = '/login.html';
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('hidden');
+}
+async function loadData() {
+  if (!subjectId) { document.getElementById('main-content').innerHTML = `<p class="text-center text-red-500 py-20">No subject selected.</p>`; return; }
+  try {
+    const chaptersRes = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
+    const chapters = await chaptersRes.json();
+    let lectures = [];
+    if (currentChapterId) {
+      const lecturesRes = await fetch(`/api/lectures?chapterId=${currentChapterId}`, { credentials: 'include' });
+      lectures = await lecturesRes.json();
+    } else if (chapters.length > 0) {
+      currentChapterId = chapters[0]._id;
+      const lecturesRes = await fetch(`/api/lectures?chapterId=${currentChapterId}`, { credentials: 'include' });
+      lectures = await lecturesRes.json();
+    }
+    allLectures = lectures;
+    renderSidebar(chapters);
+    renderLectures(lectures);
+  } catch (err) { console.error(err); document.getElementById('main-content').innerHTML = `<p class="text-center text-red-500 py-20">Failed to load data.</p>`; }
+}
+function renderSidebar(chapters) {
+  const container = document.getElementById('chapters-list');
+  container.innerHTML = '';
+  chapters.forEach(ch => {
+    const active = ch._id === currentChapterId ? 'active-chapter' : 'chapter-item';
+    const div = document.createElement('div');
+    div.className = `${active} px-4 py-3 text-sm cursor-pointer hover:bg-gray-100 rounded-xl`;
+    div.textContent = ch.title;
+    div.onclick = () => { selectChapter(ch._id); if (window.innerWidth < 768) toggleSidebar(); };
+    container.appendChild(div);
+  });
+}
+
+function renderLectures(lectures) {
+  const container = document.getElementById('main-content');
+  let html = '';
+  if (lectures.length === 0) { container.innerHTML = `<p class="text-center text-gray-500 py-20">No lectures found.</p>`; return; }
+  lectures.forEach(lec => {
+    const imageUrl = lec.imageUrl || "https://via.placeholder.com/80x80/1f2937/ffffff?text=Instructor";
+    const isCompleted = lec.completed === true;
+    // Store lecture data for the modal
+    const lectureId = lec._id;
+    const pdfLink = lec.pdfLink || '';
+    const hasDpp = lec.hasDpp === true;
+    html += `
+      <div class="lecture-card bg-white rounded-3xl p-5 flex gap-4 border border-gray-100 mb-5">
+        <img src="${imageUrl}" class="w-16 h-16 rounded-2xl object-cover flex-shrink-0">
+        <div class="flex-1">
+          <div class="flex justify-between items-start">
+            <div><span class="text-xs text-gray-500">${lec.date || 'N/A'} • ${lec.duration || '45m'}</span><h3 class="font-semibold text-base mt-1 line-clamp-2">${lec.title}</h3></div>
+            <button onclick="markLectureComplete('${lec._id}')" class="w-9 h-9 flex items-center justify-center rounded-full border-2 flex-shrink-0 ${isCompleted ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 hover:border-green-500 hover:bg-green-50'}">${isCompleted ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-check text-gray-400"></i>'}</button>
+          </div>
+          <div class="flex gap-3 mt-5">
+            <button onclick="playVideo('${lec.youtubeId || ''}')" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-2xl text-sm font-medium flex items-center justify-center gap-2"><i class="fa-solid fa-play"></i> Watch</button>
+            <button onclick="showNotesModal('${lectureId}', '${pdfLink}', ${hasDpp})" class="flex-1 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 py-2.5 rounded-2xl text-sm font-medium flex items-center justify-center gap-2"><i class="fa-solid fa-book-open"></i> Notes & More</button>
+          </div>
+        </div>
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+let currentLectureId = '';
+let currentHasDpp = false;
+// currentPdfLink already declared earlier – do NOT redeclare
+function showNotesModal(lectureId, pdfLink, hasDpp) {
+  currentLectureId = lectureId;
+  currentPdfLink = pdfLink;
+  currentHasDpp = hasDpp;
+  // Always show modal – buttons will decide what to do
+  document.getElementById('notes-modal').classList.remove('hidden');
+}
+
+function hideNotesModal() {
+  document.getElementById('notes-modal').classList.add('hidden');
+}
+
+function openPdf() {
+  if (currentPdfLink) {
+    window.open(currentPdfLink, '_blank');
+  } else {
+    showToast("No PDF notes available for this lecture.", "info");
+  }
+  hideNotesModal();
+}
+
+function openDpp() {
+  if (currentHasDpp) {
+    window.location.href = `/dpp-viewer.html?lectureId=${currentLectureId}`;
+  } else {
+    showToast("DPP not yet added for this lecture. It will be available soon.", "info");
+  }
+  hideNotesModal();
+}
+function applyFilters() {
+  const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+  const filterType = document.getElementById('filter-select').value;
+  let filtered = allLectures.filter(lec => {
+    const matchesSearch = !searchTerm || lec.title.toLowerCase().includes(searchTerm);
+    let matchesFilter = true;
+    if (filterType === 'completed') matchesFilter = lec.completed === true;
+    if (filterType === 'pending') matchesFilter = lec.completed !== true;
+    return matchesSearch && matchesFilter;
+  });
+  renderLectures(filtered);
+}
+async function markLectureComplete(lectureId) {
+  try {
+    const res = await fetch(`/api/lectures/${lectureId}/complete`, { method: 'POST', credentials: 'include' });
+    const data = await res.json();
+    if (data.success) { loadData(); showToast("Lecture marked as completed!", "success"); }
+    else showToast(data.msg || "Failed to mark completed", "error");
+  } catch (err) { showToast("Please login first", "error"); }
+}
+function selectChapter(chapterId) {
+  currentChapterId = chapterId;
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-select').value = 'all';
+  loadData();
+  if (window.innerWidth < 768) toggleSidebar();
+}
+
+// ========== ADVANCED VIDEO PLAYER - FIXED FOR MULTIPLE VIDEOS ==========
+let player = null;
+let playerReady = false;
+let currentVideoId = null;
+let progressInterval = null;
+let isDraggingProgress = false;
+let currentVolume = 70;
+let isMuted = false;
+let currentPlaybackRate = 1;
+let controlsHideTimeout = null;
+let isCreatingPlayer = false;
+
+const modal = document.getElementById('videoPlayerModal');
+const videoStageContainer = document.getElementById('videoStageContainer');
+const overlayVideo = document.getElementById('videoOverlay');
+const playPauseBtn = document.getElementById('playPauseBtn');
+const progressBarBg = document.getElementById('progressBarBg');
+const progressFill = document.getElementById('progressFill');
+const timeDisplaySpan = document.getElementById('timeDisplay');
+const volumeBtn = document.getElementById('volumeBtn');
+const volumeSlider = document.getElementById('volumeSlider');
+const speedDropdown = document.getElementById('speedDropdown');
+const qualityDropdown = document.getElementById('qualityDropdown');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const centerIconDiv = document.getElementById('centerPlayIcon');
+const messagePanel = document.getElementById('messagePanel');
+const errorTextSpan = document.getElementById('errorText');
+const closeModalBtn = document.getElementById('closeVideoModal');
+const customControls = document.getElementById('customControls');
+
+function resetControlsHideTimer() {
+  if (customControls) {
+    customControls.classList.remove('hide-controls');
+    if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
+    controlsHideTimeout = setTimeout(() => {
+      if (player && playerReady && !isDraggingProgress && customControls) {
+        customControls.classList.add('hide-controls');
+      }
+    }, 2000);
+  }
+}
+function showControls() {
+  if (customControls) {
+    customControls.classList.remove('hide-controls');
+    resetControlsHideTimer();
+  }
+}
+function bindControlEvents() {
+  const stage = document.querySelector('#videoPlayerModal .video-stage');
+  if (stage) {
+    stage.removeEventListener('mousemove', showControls);
+    stage.removeEventListener('click', showControls);
+    stage.removeEventListener('touchstart', showControls);
+    stage.addEventListener('mousemove', showControls);
+    stage.addEventListener('click', showControls);
+    stage.addEventListener('touchstart', showControls);
+  }
+  if (customControls) {
+    customControls.removeEventListener('mouseenter', null);
+    customControls.removeEventListener('mouseleave', null);
+    customControls.addEventListener('mouseenter', () => {
+      if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
+      customControls.classList.remove('hide-controls');
+    });
+    customControls.addEventListener('mouseleave', resetControlsHideTimer);
+  }
+}
+
+// Completely destroy and remove the iframe
+function destroyPlayer() {
+  if (progressInterval) {
+    clearInterval(progressInterval);
+    progressInterval = null;
+  }
+  if (player) {
+    try {
+      player.pauseVideo();
+      player.destroy();
+    } catch(e) { console.warn('Player destroy error:', e); }
+    player = null;
+  }
+  playerReady = false;
+  // Remove existing iframe
+  const existingIframe = document.getElementById('youtubeIframe');
+  if (existingIframe) {
+    existingIframe.remove();
+  }
+  isCreatingPlayer = false;
+}
+
+// Create a fresh iframe element
+function createFreshIframe() {
+  const iframe = document.createElement('iframe');
+  iframe.id = 'youtubeIframe';
+  iframe.className = 'absolute inset-0 w-full h-full border-0 pointer-events-none';
+  iframe.allow = 'autoplay; fullscreen; encrypted-media';
+  iframe.allowFullscreen = true;
+  return iframe;
+}
+
+function loadYouTubeAPI() {
+  if (window.YT && window.YT.Player) {
+    createPlayer(currentVideoId);
+    return;
+  }
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+  window.onYouTubeIframeAPIReady = () => createPlayer(currentVideoId);
+}
+
+function createPlayer(videoId) {
+  if (isCreatingPlayer) {
+    console.log('Already creating player, skipping');
+    return;
+  }
+  isCreatingPlayer = true;
+  destroyPlayer(); // clean up old player and iframe
+  
+  // Create and append new iframe
+  const newIframe = createFreshIframe();
+  videoStageContainer.insertBefore(newIframe, videoStageContainer.firstChild);
+  
+  const params = {
+    controls: 0,
+    disablekb: 1,
+    modestbranding: 1,
+    rel: 0,
+    showinfo: 0,
+    iv_load_policy: 3,
+    fs: 0,
+    playsinline: 1,
+    enablejsapi: 1,
+    origin: window.location.origin
+  };
+  newIframe.src = `https://www.youtube.com/embed/${videoId}?${new URLSearchParams(params).toString()}`;
+  
+  player = new YT.Player('youtubeIframe', {
+    events: {
+      onReady: onPlayerReady,
+      onStateChange: onPlayerStateChange,
+      onError: onPlayerError
+    }
+  });
+}
+
+function onPlayerReady(e) {
+  playerReady = true;
+  isCreatingPlayer = false;
+  messagePanel.classList.add('hidden');
+  player.setVolume(currentVolume);
+  volumeSlider.value = currentVolume;
+  updateVolumeIcon(currentVolume);
+  player.setPlaybackRate(currentPlaybackRate);
+  speedDropdown.value = currentPlaybackRate;
+  startProgressTimer();
+  player.playVideo();
+  bindControlEvents();
+  resetControlsHideTimer();
+}
+
+function onPlayerStateChange(e) {
+  const state = e.data;
+  const isPlaying = (state === YT.PlayerState.PLAYING);
+  playPauseBtn.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+  
+  if (isPlaying) {
+    centerIconDiv.style.opacity = '0';
+  } else if (state === YT.PlayerState.PAUSED) {
+    centerIconDiv.style.opacity = '0.95';
+    centerIconDiv.innerHTML = '<i class="fas fa-play"></i>';
+  } else if (state === YT.PlayerState.ENDED) {
+    centerIconDiv.innerHTML = '<i class="fas fa-rotate-right"></i>';
+    centerIconDiv.style.opacity = '0.95';
+  } else {
+    centerIconDiv.style.opacity = '0';
+  }
+  updateTimeDisplay();
+  if (isPlaying) resetControlsHideTimer();
+}
+
+function onPlayerError(error) {
+  console.error('YouTube error:', error);
+  errorTextSpan.innerText = '⚠️ Failed to load video. Invalid ID or restricted content.';
+  messagePanel.classList.remove('hidden');
+  playerReady = false;
+  isCreatingPlayer = false;
+}
+
+function updateTimeDisplay() {
+  if (!player || !playerReady) return;
+  const duration = player.getDuration();
+  const current = player.getCurrentTime();
+  if (duration && isFinite(duration)) {
+    timeDisplaySpan.innerText = `${formatTime(current)} / ${formatTime(duration)}`;
+    if (!isDraggingProgress) progressFill.style.width = `${(current / duration) * 100}%`;
+  } else {
+    timeDisplaySpan.innerText = `0:00 / 0:00`;
+  }
+}
+
+function formatTime(seconds) {
+  if (isNaN(seconds)) return "0:00";
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  if (hrs > 0) return `${hrs}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+  return `${mins}:${secs.toString().padStart(2,'0')}`;
+}
+
+function startProgressTimer() {
+  if (progressInterval) clearInterval(progressInterval);
+  progressInterval = setInterval(() => {
+    if (player && playerReady && !isDraggingProgress) updateTimeDisplay();
+  }, 250);
+}
+
+function seekToPosition(e) {
+  if (!player || !playerReady) return;
+  const rect = progressBarBg.getBoundingClientRect();
+  let percent = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+  const duration = player.getDuration();
+  if (duration && isFinite(duration)) {
+    player.seekTo(percent * duration, true);
+    updateTimeDisplay();
+  }
+  showControls();
+}
+
+function handleProgressDragStart(e) {
+  if (!player || !playerReady) return;
+  isDraggingProgress = true;
+  seekToPosition(e);
+  const onMove = (move) => seekToPosition(move);
+  const onUp = () => {
+    isDraggingProgress = false;
+    updateTimeDisplay();
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    showControls();
+  };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function setVolume(value) {
+  let vol = Math.min(100, Math.max(0, parseInt(value)));
+  currentVolume = vol;
+  if (player && playerReady) player.setVolume(vol);
+  volumeSlider.value = vol;
+  updateVolumeIcon(vol);
+  isMuted = (vol === 0);
+  showControls();
+}
+
+function toggleMute() {
+  if (!player || !playerReady) return;
+  if (isMuted || currentVolume === 0) {
+    let newVol = currentVolume > 0 ? currentVolume : 70;
+    player.setVolume(newVol);
+    volumeSlider.value = newVol;
+    currentVolume = newVol;
+    isMuted = false;
+  } else {
+    player.setVolume(0);
+    volumeSlider.value = 0;
+    isMuted = true;
+  }
+  updateVolumeIcon(isMuted ? 0 : currentVolume);
+  showControls();
+}
+
+function updateVolumeIcon(vol) {
+  if (vol === 0) volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+  else if (vol < 40) volumeBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
+  else volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+}
+
+function changeSpeed() {
+  const newSpeed = parseFloat(speedDropdown.value);
+  if (!player || !playerReady) return;
+  currentPlaybackRate = newSpeed;
+  player.setPlaybackRate(newSpeed);
+  showControls();
+}
+speedDropdown.addEventListener('change', changeSpeed);
+
+function changeQuality() {
+  const quality = qualityDropdown.value;
+  if (!player || !playerReady) return;
+  if (quality === 'auto') player.setPlaybackQuality('auto');
+  else player.setPlaybackQuality(quality);
+  showControls();
+}
+qualityDropdown.addEventListener('change', changeQuality);
+
+function toggleFullscreen() {
+  const container = document.querySelector('#videoPlayerModal .player-card');
+  if (!document.fullscreenElement) {
+    container.requestFullscreen().catch(e => console.warn(e));
+  } else {
+    document.exitFullscreen();
+  }
+  showControls();
+}
+
+function closeVideoModal() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+  destroyPlayer();
+  modal.classList.add('hidden');
+  if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
+  document.body.style.overflow = '';
+  // Remove any leftover iframe from the container
+  const leftoverIframe = document.getElementById('youtubeIframe');
+  if (leftoverIframe) leftoverIframe.remove();
+}
+
+function handleVideoKeys(e) {
+  if (modal.classList.contains('hidden')) return;
+  if (!player || !playerReady) return;
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT') return;
+  switch(e.key) {
+    case ' ': case 'Space':
+      e.preventDefault();
+      (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+      showControls();
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      player.seekTo(Math.max(0, player.getCurrentTime() - 5), true);
+      updateTimeDisplay();
+      showControls();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 5), true);
+      updateTimeDisplay();
+      showControls();
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      setVolume(currentVolume + 5);
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      setVolume(currentVolume - 5);
+      break;
+    case 'f': case 'F':
+      e.preventDefault();
+      toggleFullscreen();
+      break;
+  }
+}
+
+// Event listeners
+playPauseBtn.addEventListener('click', () => {
+  if (player && playerReady) {
+    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+    showControls();
+  }
+});
+progressBarBg.addEventListener('click', seekToPosition);
+progressBarBg.addEventListener('mousedown', handleProgressDragStart);
+volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
+volumeBtn.addEventListener('click', toggleMute);
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+overlayVideo.addEventListener('click', () => {
+  if (player && playerReady) {
+    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+    showControls();
+  }
+});
+overlayVideo.addEventListener('dblclick', toggleFullscreen);
+closeModalBtn.addEventListener('click', closeVideoModal);
+document.addEventListener('keydown', handleVideoKeys);
+window.addEventListener('fullscreenchange', () => {
+  fullscreenBtn.innerHTML = document.fullscreenElement ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
+  if (!document.fullscreenElement) {
+    document.body.style.overflow = '';
+    document.body.offsetHeight;
+  }
+});
+
+function playVideo(videoId) {
+  if (!videoId) {
+    showToast("No YouTube video ID added yet.", "error");
+    return;
+  }
+  // Always close existing modal completely and recreate everything
+  closeVideoModal();
+  // Small delay to ensure DOM cleanup
+  setTimeout(() => {
+    currentVideoId = videoId;
+    modal.classList.remove('hidden');
+    messagePanel.classList.remove('hidden');
+    errorTextSpan.innerText = "Loading video...";
+    centerIconDiv.style.opacity = '0';
+    if (window.YT && window.YT.Player) {
+      createPlayer(videoId);
+    } else {
+      loadYouTubeAPI();
+    }
+  }, 150);
+}
+
+// ========== MANAGE MODAL FUNCTIONS (unchanged) ==========
+function showManageModal() { manageMode = 1; document.getElementById('manage-modal').classList.remove('hidden'); updateManageUI(); }
+function hideManageModal() { document.getElementById('manage-modal').classList.add('hidden'); }
+function setManageMode(mode) { manageMode = mode; updateManageUI(); }
+function updateManageUI() {
+  for (let i=1;i<=5;i++) { const btn = document.getElementById(`btn${i}`); if(btn) btn.classList.remove('manage-btn-active'); }
+  const activeBtn = document.getElementById(`btn${manageMode}`); if(activeBtn) activeBtn.classList.add('manage-btn-active');
+  for(let i=1;i<=5;i++){ const form = document.getElementById(`form${i}`); if(form) form.classList.toggle('hidden', i !== manageMode); }
+  if(manageMode === 2) populateLectureChapterSelect();
+  if(manageMode === 3) populateDeleteChapterSelect();
+  if(manageMode === 4) populateDeleteLectureChapterSelect();
+  if(manageMode === 5) populateUpdateChapterSelect();
+}
+async function populateLectureChapterSelect() {
+  const select = document.getElementById('lecture-chapter-select');
+  select.innerHTML = '<option value="">Loading chapters...</option>';
+  try {
+    const res = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
+    const chapters = await res.json();
+    select.innerHTML = '<option value="">Select Chapter</option>';
+    if (chapters.length === 0) {
+      select.innerHTML = '<option value="">No chapters found - create one first</option>';
+    } else {
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch._id;
+        opt.textContent = ch.title;
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    select.innerHTML = '<option value="">Error loading chapters</option>';
+    console.error('Error loading chapters:', e);
+  }
+}
+
+async function populateDeleteChapterSelect() {
+  const select = document.getElementById('delete-chapter-select');
+  select.innerHTML = '<option value="">Loading chapters...</option>';
+  try {
+    const res = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
+    const chapters = await res.json();
+    select.innerHTML = '<option value="">Select Chapter to Delete</option>';
+    if (chapters.length === 0) {
+      select.innerHTML = '<option value="">No chapters to delete</option>';
+    } else {
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch._id;
+        opt.textContent = ch.title;
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    select.innerHTML = '<option value="">Error loading chapters</option>';
+    console.error('Error loading chapters:', e);
+  }
+}
+
+async function populateDeleteLectureChapterSelect() {
+  const select = document.getElementById('delete-lecture-chapter');
+  select.innerHTML = '<option value="">Loading chapters...</option>';
+  try {
+    const res = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
+    const chapters = await res.json();
+    select.innerHTML = '<option value="">Select Chapter</option>';
+    if (chapters.length === 0) {
+      select.innerHTML = '<option value="">No chapters found</option>';
+    } else {
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch._id;
+        opt.textContent = ch.title;
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    select.innerHTML = '<option value="">Error loading chapters</option>';
+    console.error('Error loading chapters:', e);
+  }
+}
+
+async function populateUpdateChapterSelect() {
+  const select = document.getElementById('update-lecture-chapter');
+  select.innerHTML = '<option value="">Loading chapters...</option>';
+  try {
+    const res = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
+    const chapters = await res.json();
+    select.innerHTML = '<option value="">Select Chapter</option>';
+    if (chapters.length === 0) {
+      select.innerHTML = '<option value="">No chapters found</option>';
+    } else {
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch._id;
+        opt.textContent = ch.title;
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    select.innerHTML = '<option value="">Error loading chapters</option>';
+    console.error('Error loading chapters:', e);
+  }
+}
+
+async function updateDeleteLectureOptions() {
+  const chapterId = document.getElementById('delete-lecture-chapter').value;
+  const select = document.getElementById('delete-lecture-select'); select.innerHTML = '<option value="">Select Lecture to Delete</option>';
+  if(!chapterId) return;
+  try { const res = await fetch(`/api/lectures?chapterId=${chapterId}`, { credentials: 'include' }); const lectures = await res.json(); lectures.forEach(lec => { const opt = document.createElement('option'); opt.value = lec._id; opt.textContent = lec.title; select.appendChild(opt); }); } catch(e) {}
+}
+
+async function populateUpdateLectureSelect() {
+  const chapterId = document.getElementById('update-lecture-chapter').value;
+  const select = document.getElementById('update-lecture-select'); select.innerHTML = '<option value="">Select Lecture to Update</option>';
+  if(!chapterId) return;
+  try { const res = await fetch(`/api/lectures?chapterId=${chapterId}`, { credentials: 'include' }); const lectures = await res.json(); lectures.forEach(lec => { const opt = document.createElement('option'); opt.value = lec._id; opt.textContent = lec.title; select.appendChild(opt); }); } catch(e) {}
+}
+async function loadLectureForUpdate() {
+  const lectureId = document.getElementById('update-lecture-select').value;
+  if(!lectureId) return;
+  try { const res = await fetch(`/api/lectures/${lectureId}`, { credentials: 'include' }); if(!res.ok) throw new Error(); const lec = await res.json(); document.getElementById('update-title').value = lec.title || ''; document.getElementById('update-youtube').value = lec.youtubeId || ''; document.getElementById('update-image').value = lec.imageUrl || ''; document.getElementById('update-pdf').value = lec.pdfLink || ''; document.getElementById('update-dpp').value = lec.dppLink || ''; } catch(e) { showToast("Could not load lecture details.", "error"); }
+}
+async function adminLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPass').value.trim();
+  if(!email || !password) { 
+    showToast("Please enter email and password", "error"); 
+    return; 
+  }
+  
+  const loginBtn = document.querySelector('#loginModal .bg-blue-600');
+  const originalText = loginBtn.textContent;
+  loginBtn.textContent = 'Logging in...';
+  loginBtn.disabled = true;
+  
+  try {
+    const res = await fetch('/api/login', { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ email, password }), 
+      credentials: 'include' 
+    });
+    const data = await res.json();
+    if(data.success && data.user.role === 'admin') {
+      hideLoginModal(); 
+      isAdmin = true; 
+      document.getElementById('manage-btn').classList.remove('hidden');
+      document.getElementById('admin-login-btn').classList.add('hidden');
+      showToast("✅ Admin logged in successfully!", "success");
+      // Clear password field
+      document.getElementById('adminPass').value = '';
+    } else {
+      showToast(data.msg || 'Invalid admin credentials', "error");
+    }
+  } catch(e) { 
+    showToast("Cannot connect to server", "error"); 
+  } finally {
+    loginBtn.textContent = originalText;
+    loginBtn.disabled = false;
+  }
+}
+function hideLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+async function executeManageAction() {
+  if (!isAdmin) { 
+    showToast("Please login as Admin first", "error"); 
+    hideManageModal(); 
+    return; 
+  }
+  
+  const confirmBtn = document.querySelector('#manage-modal .bg-blue-600');
+  const originalText = confirmBtn.textContent;
+  confirmBtn.textContent = 'Processing...';
+  confirmBtn.disabled = true;
+  
+  try {
+    if (manageMode === 1) {
+      const title = document.getElementById('chapter-title').value.trim();
+      if (!title) { 
+        showToast("Chapter title is required", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      const res = await fetch('/api/chapters', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ subjectId, title, order: Date.now() }), 
+        credentials: 'include' 
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Chapter added successfully!", "success");
+        document.getElementById('chapter-title').value = '';
+        await loadData(); // Refresh the page data
+      } else {
+        showToast(data.msg || "Failed to add chapter", "error");
+      }
+    }
+    else if (manageMode === 2) {
+      const title = document.getElementById('lecture-title').value.trim();
+      const chapterId = document.getElementById('lecture-chapter-select').value;
+      if (!title || !chapterId) { 
+        showToast("Title and Chapter are required", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      const res = await fetch('/api/lectures', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          subjectId, chapterId, title, 
+          date: document.getElementById('lecture-date').value || new Date().toLocaleDateString('en-GB'), 
+          duration: document.getElementById('lecture-duration').value || "45m", 
+          youtubeId: document.getElementById('lecture-youtube').value.trim(), 
+          imageUrl: document.getElementById('lecture-image').value.trim(), 
+          pdfLink: document.getElementById('lecture-pdf').value.trim(), 
+          dppLink: document.getElementById('lecture-dpp').value.trim() 
+        }), 
+        credentials: 'include' 
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Lecture added successfully!", "success");
+        document.getElementById('lecture-title').value = '';
+        document.getElementById('lecture-youtube').value = '';
+        document.getElementById('lecture-image').value = '';
+        document.getElementById('lecture-pdf').value = '';
+        document.getElementById('lecture-dpp').value = '';
+        await loadData();
+      } else {
+        showToast(data.msg || "Failed to add lecture", "error");
+      }
+    }
+    else if (manageMode === 3) {
+      const chapterId = document.getElementById('delete-chapter-select').value;
+      if (!chapterId) { 
+        showToast("Select a chapter to delete", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      if (!confirm("Delete this chapter and all its lectures?")) {
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return;
+      }
+      const res = await fetch(`/api/chapters/${chapterId}`, { method: 'DELETE', credentials: 'include' });
+      if (res.ok) {
+        showToast("Chapter deleted successfully!", "success");
+        // If we deleted the current chapter, select the first available
+        const chaptersRes = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
+        const chapters = await chaptersRes.json();
+        if (chapters.length > 0) {
+          currentChapterId = chapters[0]._id;
+        } else {
+          currentChapterId = null;
+        }
+        await loadData();
+      } else {
+        showToast("Failed to delete chapter", "error");
+      }
+    }
+    else if (manageMode === 4) {
+      const lectureId = document.getElementById('delete-lecture-select').value;
+      if (!lectureId) { 
+        showToast("Select a lecture to delete", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      if (!confirm("Delete this lecture?")) {
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return;
+      }
+      const res = await fetch(`/api/lectures/${lectureId}`, { method: 'DELETE', credentials: 'include' });
+      if (res.ok) {
+        showToast("Lecture deleted successfully!", "success");
+        await loadData();
+      } else {
+        showToast("Failed to delete lecture", "error");
+      }
+    }
+    else if (manageMode === 5) {
+      const lectureId = document.getElementById('update-lecture-select').value;
+      if (!lectureId) { 
+        showToast("Select a lecture to update", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      const updateData = {};
+      const title = document.getElementById('update-title').value.trim();
+      const youtubeId = document.getElementById('update-youtube').value.trim();
+      const imageUrl = document.getElementById('update-image').value.trim();
+      const pdfLink = document.getElementById('update-pdf').value.trim();
+      const dppLink = document.getElementById('update-dpp').value.trim();
+      
+      if (title) updateData.title = title;
+      if (youtubeId) updateData.youtubeId = youtubeId;
+      if (imageUrl) updateData.imageUrl = imageUrl;
+      if (pdfLink) updateData.pdfLink = pdfLink;
+      if (dppLink) updateData.dppLink = dppLink;
+      
+      const res = await fetch(`/api/lectures/${lectureId}`, { 
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(updateData), 
+        credentials: 'include' 
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Lecture updated successfully!", "success");
+        document.getElementById('update-title').value = '';
+        document.getElementById('update-youtube').value = '';
+        document.getElementById('update-image').value = '';
+        document.getElementById('update-pdf').value = '';
+        document.getElementById('update-dpp').value = '';
+        await loadData();
+      } else {
+        showToast(data.msg || "Failed to update lecture", "error");
+      }
+    }
+    
+    // Refresh all dropdowns in the modal
+    if (manageMode === 2) await populateLectureChapterSelect();
+    if (manageMode === 3) await populateDeleteChapterSelect();
+    if (manageMode === 4) {
+      await populateDeleteLectureChapterSelect();
+      document.getElementById('delete-lecture-select').innerHTML = '<option value="">Select Chapter first</option>';
+    }
+    if (manageMode === 5) {
+      await populateUpdateChapterSelect();
+      document.getElementById('update-lecture-select').innerHTML = '<option value="">Select Chapter first</option>';
+    }
+    
+  } catch (err) { 
+    console.error(err); 
+    showToast("Action failed. Check console.", "error"); 
+  } finally {
+    confirmBtn.textContent = originalText;
+    confirmBtn.disabled = false;
+  }
+}
+window.onload = async () => { await checkAuth(); await loadData(); };
+</script>
+</body>
+</html>

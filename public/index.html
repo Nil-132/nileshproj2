@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Project02 - Learn Like Physics Wallah</title>
+
+  <!-- PWA Manifest & Theme -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3B82F6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Project02">
+
+  <!-- Tailwind + Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .hero-bg {
+      background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Custom Install Button (floating) */
+    .install-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, #3B82F6, #1E3A8A);
+      color: white;
+      border: none;
+      border-radius: 60px;
+      padding: 12px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .install-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.3);
+    }
+    .install-btn i {
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+  <!-- Navbar -->
+  <nav class="bg-white border-b shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-8 py-5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl">P</div>
+        <h1 class="text-2xl font-bold text-gray-800">Project02</h1>
+      </div>
+      <a href="/login.html"
+         class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-medium transition">
+        Login
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <div class="hero-bg h-screen flex items-center text-white">
+    <div class="max-w-7xl mx-auto px-8 text-center">
+      <h1 class="text-6xl font-bold mb-6 leading-tight">
+        Learn from the Best.<br>
+        Crack Your Exam with Confidence.
+      </h1>
+      <p class="text-2xl mb-10 max-w-2xl mx-auto text-gray-200">
+        High-quality recorded lectures, live classes, notes & DPP — all in one place.
+      </p>
+      <a href="/login.html"
+         class="inline-block bg-white text-blue-600 hover:bg-gray-100 font-semibold text-xl px-12 py-5 rounded-3xl transition">
+        Get Started - Login Now
+      </a>
+    </div>
+  </div>
+
+  <!-- Features Section -->
+  <div class="max-w-7xl mx-auto px-8 py-20">
+    <h2 class="text-4xl font-bold text-center mb-16">Why Students Love Project02</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div class="text-center">
+        <div class="w-20 h-20 mx-auto bg-blue-100 rounded-3xl flex items-center justify-center text-4xl mb-6">📹</div>
+        <h3 class="text-2xl font-semibold mb-3">Recorded Lectures</h3>
+        <p class="text-gray-600">High-quality video lectures with clear explanations. Watch anytime, anywhere.</p>
+      </div>
+      <div class="text-center">
+        <div class="w-20 h-20 mx-auto bg-red-100 rounded-3xl flex items-center justify-center text-4xl mb-6">📡</div>
+        <h3 class="text-2xl font-semibold mb-3">Live Classes</h3>
+        <p class="text-gray-600">Join live sessions with real-time doubt solving and interaction.</p>
+      </div>
+      <div class="text-center">
+        <div class="w-20 h-20 mx-auto bg-green-100 rounded-3xl flex items-center justify-center text-4xl mb-6">📝</div>
+        <h3 class="text-2xl font-semibold mb-3">Notes & DPP</h3>
+        <p class="text-gray-600">Download class notes and Daily Practice Problems for better revision.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-8 text-center">
+      <p class="text-gray-400">Made with ❤️ for students | Project02 - PW Replica</p>
+    </div>
+  </footer>
+
+  <!-- Custom Install Button (Floating) -->
+  <button id="installBtn" class="install-btn">
+    <i class="fas fa-download"></i> Install as App
+  </button>
+
+  <!-- PWA Installation Logic + Service Worker -->
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ Service Worker registered:', reg))
+          .catch(err => console.log('❌ Service Worker registration failed:', err));
+      });
+    }
+
+    // PWA Install Prompt Handling
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Store the event for later
+      deferredPrompt = e;
+      // Show the custom install button
+      if (installBtn) installBtn.style.display = 'flex';
+      console.log('📱 App is installable');
+    });
+
+    // Handle custom install button click
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        // Show the native install prompt
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response: ${outcome}`);
+        // Reset the deferred prompt (can only be used once)
+        deferredPrompt = null;
+        // Hide the button after the prompt is shown
+        installBtn.style.display = 'none';
+      });
+    }
+
+    // Optional: Hide button after successful installation
+    window.addEventListener('appinstalled', () => {
+      console.log('🎉 App was installed successfully');
+      if (installBtn) installBtn.style.display = 'none';
+      deferredPrompt = null;
+    });
+
+    // Fallback for browsers that don't support beforeinstallprompt (Safari, Firefox)
+    const isInstallSupported = 'BeforeInstallPromptEvent' in window;
+    if (!isInstallSupported && installBtn) {
+      installBtn.style.display = 'flex';
+      installBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add to Home Screen';
+      installBtn.onclick = () => {
+        alert('To install this app:\n\n• Safari: Tap Share → Add to Home Screen\n• Firefox: Tap Menu → Add to Home Screen\n• Chrome/Edge: Install button will appear automatically');
+      };
+    }
+  </script>
+  <script>
+  (async function checkAuthAndRedirect() {
+    try {
+      const res = await fetch('/api/me', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        window.location.replace('/dashboard.html');
+      }
+    } catch (err) {
+      // Not logged in – stay on page
+    }
+  })();
+</script>
+</body>
+</html>

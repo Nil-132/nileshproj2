@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPP Manager - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .tab-btn.active {
+            background-color: white;
+            border-bottom: 2px solid #3b82f6;
+            color: #1e40af;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Login page specific */
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .login-container h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #1e3a8a;
+        }
+        .error {
+            color: #ef4444;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Login Section (shown when not logged in) -->
+    <div id="loginSection" class="login-container">
+        <h2><i class="fas fa-lock mr-2"></i> Admin Login</h2>
+        <form id="loginForm">
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Email</label>
+                <input type="email" id="loginEmail" required class="w-full p-3 border border-gray-300 rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">Password</label>
+                <input type="password" id="loginPassword" required class="w-full p-3 border border-gray-300 rounded-lg">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
+                <i class="fas fa-sign-in-alt mr-2"></i> Login
+            </button>
+            <div id="loginError" class="error mt-3"></div>
+        </form>
+    </div>
+
+    <!-- Main Management Interface (hidden until admin logged in) -->
+    <div id="management-interface" class="hidden">
+        <div class="max-w-6xl mx-auto py-8 px-4">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-cog mr-2 text-gray-600"></i>DPP Management
+                </h1>
+                <div>
+                    <span id="adminName" class="text-sm text-gray-600 mr-4"></span>
+                    <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                    </button>
+                    <a href="/" class="ml-3 text-blue-600 hover:underline">&larr; Back to Site</a>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex border-b mb-6 flex-wrap">
+                <button class="tab-btn active px-6 py-3 font-medium" data-tab="quick">
+                    <i class="fas fa-bolt mr-2"></i>Quick Upload
+                </button>
+                <button class="tab-btn px-6 py-3 font-medium" data-tab="json">
+                    <i class="fas fa-upload mr-2"></i>JSON Upload
+                </button>
+                <button class="tab-btn px-6 py-3 font-medium" data-tab="editor">
+                    <i class="fas fa-edit mr-2"></i>Question Editor
+                </button>
+                <button class="tab-btn px-6 py-3 font-medium" data-tab="migrate">
+                    <i class="fas fa-database mr-2"></i>Migrate Static DPPs
+                </button>
+                <button class="tab-btn px-6 py-3 font-medium" data-tab="motivation">
+                    <i class="fas fa-calendar-alt mr-2"></i>Motivation
+                </button>
+            </div>
+
+            <!-- Quick Upload Tab -->
+            <div id="quick-tab" class="tab-content active bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Quick Upload – No JSON File Needed</h2>
+                <p class="text-gray-600 mb-6">Select the lecture, paste your questions array, and upload.</p>
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">1. Select Subject</label>
+                        <select id="quick-subject-select" class="w-full md:w-2/3 p-3 border rounded-lg">
+                            <option value="">-- Choose a subject --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">2. Select Lecture</label>
+                        <select id="quick-lecture-select" class="w-full md:w-2/3 p-3 border rounded-lg" disabled>
+                            <option value="">-- First choose a subject --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">3. Paste Questions Array</label>
+                        <p class="text-sm text-gray-500 mb-2">Paste the raw <code>questions</code> array exactly as it appears in your static DPP file.</p>
+                        <textarea id="quick-questions" rows="12" class="w-full p-4 border rounded-lg font-mono text-sm" placeholder='[
+  {
+    "date": "2023",
+    "text": "Q1. Seven people Z, Y, X...",
+    "options": ["Two", "Three", "One", "Four", "None"],
+    "ans": 3,
+    "diff": "MEDIUM"
+  }
+]'></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Subject (optional)</label>
+                        <input type="text" id="quick-subject" placeholder="e.g., Logical Reasoning" class="w-full md:w-2/3 p-3 border rounded-lg">
+                        <p class="text-sm text-gray-500 mt-1">Leave blank to use the selected subject's name.</p>
+                    </div>
+                    <button id="quick-upload-btn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-8 rounded-lg">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i>Upload DPP
+                    </button>
+                    <div id="quick-result" class="mt-4 p-4 rounded hidden"></div>
+                </div>
+                <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+                    <h3 class="font-medium text-blue-800 mb-2">Example Questions Format:</h3>
+                    <pre class="text-xs bg-gray-800 text-green-400 p-3 rounded overflow-auto max-h-48">[
+  {
+    "date": "2023",
+    "text": "Q1. Seven people Z, Y, X, W, V, U and T are sitting...",
+    "options": ["Two", "Three", "One", "Four", "None of these"],
+    "ans": 3,
+    "diff": "MEDIUM"
+  }
+]</pre>
+                </div>
+            </div>
+
+            <!-- JSON Upload Tab -->
+            <div id="json-tab" class="tab-content bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Upload DPP JSON File</h2>
+                <p class="text-gray-600 mb-4">Upload a complete JSON file. If lectureId is omitted, lectureName will be used to find the lecture.</p>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <input type="file" id="json-file" accept=".json,application/json" class="hidden">
+                    <button id="select-file-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded">
+                        <i class="fas fa-folder-open mr-2"></i>Choose File
+                    </button>
+                    <span id="file-name" class="ml-3 text-gray-500">No file selected</span>
+                </div>
+                <button id="upload-btn" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg">
+                    <i class="fas fa-cloud-upload-alt mr-2"></i>Upload & Save
+                </button>
+                <div id="upload-result" class="mt-4 p-4 bg-gray-100 rounded hidden">
+                    <pre class="whitespace-pre-wrap text-sm"></pre>
+                </div>
+            </div>
+
+            <!-- Question Editor Tab -->
+           <!-- ========== QUESTION EDITOR TAB ========== -->
+<div id="editor-tab" class="tab-content bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-semibold mb-4">Edit / Delete DPP Questions</h2>
+    <div class="mb-4 flex flex-wrap gap-4 items-end">
+        <div class="flex-1">
+            <label class="block text-gray-700 font-medium mb-2">Select Lecture to Edit:</label>
+            <select id="editor-lecture-select" class="w-full p-3 border border-gray-300 rounded-lg">
+                <option value="">-- Choose a lecture --</option>
+            </select>
+        </div>
+        <div>
+            <button id="delete-dpp-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium">
+                <i class="fas fa-trash mr-2"></i>Delete DPP
+            </button>
+        </div>
+    </div>
+    <div id="editor-form-container"></div>
+</div>
+
+<!-- Motivation Tab -->
+<div id="motivation-tab" class="tab-content bg-white rounded-lg shadow-md p-6">
+  <h2 class="text-xl font-semibold mb-4">Manage Motivation Popup</h2>
+  <p class="text-gray-600 mb-6">Set the start date and define messages for each week/day.</p>
+
+  <!-- Start Date -->
+  <div class="mb-4">
+    <label class="block text-gray-700 font-medium mb-2">Plan Start Date</label>
+    <input type="date" id="motivation-start-date" class="w-full md:w-1/3 p-3 border rounded-lg">
+  </div>
+
+  <!-- Weeks JSON Editor -->
+  <div class="mb-4">
+    <label class="block text-gray-700 font-medium mb-2">Weeks & Messages (JSON)</label>
+    <textarea id="motivation-weeks-json" rows="12" class="w-full p-3 border rounded-lg font-mono text-sm" placeholder='[
+  {
+    "weekNumber": 1,
+    "days": [
+      { "dayNumber": 1, "message": "Day 1 – Let’s begin! 🚀" },
+      { "dayNumber": 2, "message": "Day 2 – Stay focused 🔥" },
+      { "dayNumber": 3, "message": "Day 3 – You’re doing great! 💪" },
+      { "dayNumber": 4, "message": "Day 4 – Keep pushing!" },
+      { "dayNumber": 5, "message": "Day 5 – Almost there!" },
+      { "dayNumber": 6, "message": "Day 6 – Weekend vibes 🌟" },
+      { "dayNumber": 7, "message": "Day 7 – Rest & reflect" }
+    ]
+  }
+]'></textarea>
+    <p class="text-sm text-gray-500 mt-1">Enter weeks 1–N, each with days 1–7. Copy the example above to start.</p>
+  </div>
+
+  <div class="mb-4">
+    <label class="inline-flex items-center">
+      <input type="checkbox" id="motivation-active" class="w-5 h-5 text-blue-600">
+      <span class="ml-2">Set as active schedule</span>
+    </label>
+  </div>
+
+  <button id="save-motivation-btn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg">
+    <i class="fas fa-save mr-2"></i>Save Schedule
+  </button>
+  <div id="motivation-result" class="mt-4 p-4 rounded hidden"></div>
+</div>
+            <!-- Migrate Tab -->
+            <div id="migrate-tab" class="tab-content bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Migrate Static DPP Files</h2>
+                <p class="text-gray-600 mb-4">Run the migration script on the server to bulk import static DPPs.</p>
+                <div class="p-4 bg-yellow-50 border border-yellow-300 rounded">
+                    <p class="font-medium">Run this command on your server:</p>
+                    <code class="bg-gray-200 px-2 py-1 rounded">node scripts/migrateDpp.js</code>
+                    <p class="mt-2 text-sm">Make sure you've configured the mapping in the script first.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allSubjects = [];
+        let allLectures = [];
+
+        // ========== AUTHENTICATION ==========
+        async function checkAdminAuth() {
+            try {
+                const res = await fetch('/api/me', { credentials: 'include' });
+                const data = await res.json();
+                if (data.success && data.user.role === 'admin') {
+                    // Already logged in as admin
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('management-interface').classList.remove('hidden');
+                    document.getElementById('adminName').textContent = `Welcome, ${data.user.name || 'Admin'}`;
+                    initializeManagement();
+                    return true;
+                } else {
+                    showLogin();
+                    return false;
+                }
+            } catch (err) {
+                showLogin();
+                return false;
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('management-interface').classList.add('hidden');
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = '';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (data.success && data.user.role === 'admin') {
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('management-interface').classList.remove('hidden');
+                    document.getElementById('adminName').textContent = `Welcome, ${data.user.name || 'Admin'}`;
+                    initializeManagement();
+                } else {
+                    errorDiv.textContent = 'Invalid admin credentials';
+                }
+            } catch (err) {
+                errorDiv.textContent = 'Login failed. Please try again.';
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            showLogin();
+            // Clear any sensitive data from memory
+            allSubjects = [];
+            allLectures = [];
+        });
+
+        // ========== MANAGEMENT INITIALIZATION ==========
+        function initializeManagement() {
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(`${btn.dataset.tab}-tab`).classList.add('active');
+                    if (btn.dataset.tab === 'editor') loadEditorLectures();
+                    if (btn.dataset.tab === 'quick') loadSubjectsAndLectures();
+                    // 👇 ADD THIS LINE
+                    if (btn.dataset.tab === 'motivation') loadMotivationSchedule();
+                });
+            });
+            setupJsonUpload();
+            setupQuickUpload();
+            loadSubjectsAndLectures();
+        }
+
+        // ========== LOAD SUBJECTS & LECTURES ==========
+        async function loadSubjectsAndLectures() {
+            try {
+                const subRes = await fetch('/api/subjects', { credentials: 'include' });
+                if (!subRes.ok) throw new Error('Failed to load subjects');
+                allSubjects = await subRes.json();
+                const subjectSelect = document.getElementById('quick-subject-select');
+                subjectSelect.innerHTML = '<option value="">-- Choose a subject --</option>';
+                allSubjects.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub._id || sub.id;
+                    opt.textContent = sub.name;
+                    subjectSelect.appendChild(opt);
+                });
+                const lecRes = await fetch('/api/lectures', { credentials: 'include' });
+                if (!lecRes.ok) throw new Error('Failed to load lectures');
+                allLectures = await lecRes.json();
+            } catch (err) {
+                console.error(err);
+                alert('Error loading data. Make sure you are logged in as admin.');
+            }
+        }
+
+        document.getElementById('quick-subject-select').addEventListener('change', (e) => {
+            const subjectId = e.target.value;
+            const lectureSelect = document.getElementById('quick-lecture-select');
+            lectureSelect.innerHTML = '<option value="">-- Select a lecture --</option>';
+            lectureSelect.disabled = !subjectId;
+            if (subjectId) {
+                const filtered = allLectures.filter(l => String(l.subjectId) === String(subjectId));
+                filtered.forEach(lec => {
+                    const opt = document.createElement('option');
+                    opt.value = lec._id;
+                    opt.textContent = lec.title;
+                    lectureSelect.appendChild(opt);
+                });
+                if (filtered.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'No lectures found for this subject';
+                    opt.disabled = true;
+                    lectureSelect.appendChild(opt);
+                }
+            }
+        });
+
+        // ========== QUICK UPLOAD ==========
+        function setupQuickUpload() {
+            document.getElementById('quick-upload-btn').addEventListener('click', async () => {
+                const lectureId = document.getElementById('quick-lecture-select').value;
+                const questionsText = document.getElementById('quick-questions').value.trim();
+                const subjectOverride = document.getElementById('quick-subject').value.trim();
+                if (!lectureId) { alert('Please select a lecture'); return; }
+                if (!questionsText) { alert('Please paste the questions array'); return; }
+                let questions;
+                try { questions = JSON.parse(questionsText); } catch (e) { alert('Invalid JSON: ' + e.message); return; }
+                if (!Array.isArray(questions)) { alert('Questions must be an array'); return; }
+                const selectedLecture = allLectures.find(l => l._id === lectureId);
+                const selectedSubject = allSubjects.find(s => (s._id || s.id) === document.getElementById('quick-subject-select').value);
+                const payload = {
+                    lectureId: lectureId,
+                    lectureName: selectedLecture.title,
+                    subject: subjectOverride || (selectedSubject ? selectedSubject.name : ''),
+                    questions: questions
+                };
+                const btn = document.getElementById('quick-upload-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
+                const resultDiv = document.getElementById('quick-result');
+                try {
+                    const res = await fetch('/api/dpp/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                        credentials: 'include'
+                    });
+                    const data = await res.json();
+                    resultDiv.classList.remove('hidden');
+                    if (res.ok) {
+                        resultDiv.className = 'mt-4 p-4 bg-green-50 border border-green-300 rounded';
+                        resultDiv.innerHTML = `<p class="font-medium text-green-800">✅ DPP uploaded successfully!</p>
+                                              <p class="text-sm mt-1">Lecture: ${selectedLecture.title}</p>
+                                              <p class="text-sm">Questions: ${questions.length}</p>`;
+                        document.getElementById('quick-questions').value = '';
+                    } else {
+                        resultDiv.className = 'mt-4 p-4 bg-red-50 border border-red-300 rounded';
+                        resultDiv.innerHTML = `<p class="font-medium text-red-800">❌ Upload failed</p>
+                                              <p class="text-sm">${data.error || 'Unknown error'}</p>`;
+                    }
+                } catch (err) {
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-4 p-4 bg-red-50 border border-red-300 rounded';
+                    resultDiv.innerHTML = `<p class="font-medium text-red-800">❌ Network error</p>`;
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-cloud-upload-alt mr-2"></i>Upload DPP';
+                }
+            });
+        }
+
+        // ========== JSON UPLOAD ==========
+        function setupJsonUpload() {
+            const fileInput = document.getElementById('json-file');
+            const selectBtn = document.getElementById('select-file-btn');
+            const fileNameSpan = document.getElementById('file-name');
+            const uploadBtn = document.getElementById('upload-btn');
+            const resultDiv = document.getElementById('upload-result');
+            selectBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) fileNameSpan.textContent = fileInput.files[0].name;
+            });
+            uploadBtn.addEventListener('click', async () => {
+                const file = fileInput.files[0];
+                if (!file) { alert('Select a JSON file'); return; }
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        uploadBtn.disabled = true;
+                        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
+                        const res = await fetch('/api/dpp/upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(json),
+                            credentials: 'include'
+                        });
+                        const data = await res.json();
+                        resultDiv.classList.remove('hidden');
+                        resultDiv.querySelector('pre').textContent = JSON.stringify(data, null, 2);
+                        resultDiv.className = res.ok ? 'mt-4 p-4 bg-green-50 rounded border border-green-300' : 'mt-4 p-4 bg-red-50 rounded border border-red-300';
+                    } catch (err) {
+                        alert('Invalid JSON: ' + err.message);
+                    } finally {
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt mr-2"></i>Upload & Save';
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        // ========== QUESTION EDITOR ==========
+        async function loadEditorLectures() {
+            const select = document.getElementById('editor-lecture-select');
+            if (!select) return;
+            if (select.options.length > 1) return;
+            try {
+                const res = await fetch('/api/dpp/lectures', { credentials: 'include' });
+                const lectures = await res.json();
+                lectures.forEach(lec => {
+                    const option = document.createElement('option');
+                    option.value = lec.lectureId;
+                    option.textContent = lec.lectureName;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Failed to load lectures:', err);
+            }
+        }
+
+        // Delete DPP
+document.getElementById('delete-dpp-btn').addEventListener('click', async () => {
+    const select = document.getElementById('editor-lecture-select');
+    const lectureId = select.value;
+    if (!lectureId) {
+        alert('Please select a lecture first');
+        return;
+    }
+    const selectedOption = select.options[select.selectedIndex];
+    const lectureName = selectedOption ? selectedOption.textContent : 'this DPP';
+    if (!confirm(`Are you sure you want to delete the DPP for "${lectureName}"?\nThis action cannot be undone.`)) {
+        return;
+    }
+    try {
+        const res = await fetch(`/api/dpp/${lectureId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`✅ DPP for "${lectureName}" deleted successfully.`);
+            // Clear the editor container and remove the lecture from dropdown
+            const container = document.getElementById('editor-form-container');
+            if (container) container.innerHTML = '';
+            // Remove the deleted lecture from the dropdown
+            select.remove(select.selectedIndex);
+            if (select.options.length === 1) select.value = '';
+        } else {
+            alert('❌ Failed to delete: ' + (data.error || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+});
+
+        document.getElementById('editor-lecture-select').addEventListener('change', async (e) => {
+            const lectureId = e.target.value;
+            const container = document.getElementById('editor-form-container');
+            if (!container) return;
+            if (!lectureId) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = '<p class="text-gray-500">Loading...</p>';
+            try {
+                const res = await fetch(`/api/dpp/${lectureId}`, { credentials: 'include' });
+                if (!res.ok) throw new Error('DPP not found');
+                const dpp = await res.json();
+                renderEditorForm(dpp, container);
+            } catch (err) {
+                container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+            }
+        });
+
+        function renderEditorForm(dpp, containerElement) {
+            if (!containerElement) return;
+            let html = `<div class="border-t pt-4"><h3 class="text-lg font-medium mb-4">Editing: ${dpp.lectureName}</h3>`;
+            dpp.questions.forEach((q, i) => {
+                html += `<div class="border rounded-lg p-4 mb-4 bg-gray-50" data-question-id="${q.id}">
+                    <p class="font-medium">Q${i+1}: <input type="text" data-field="text" value="${q.questionText.replace(/"/g, '&quot;')}" class="w-full p-2 border rounded mt-1"></p>`;
+                q.options.forEach((opt, oi) => {
+                    html += `<input type="text" data-field="opt${oi}" value="${opt.replace(/"/g, '&quot;')}" class="w-full p-2 border rounded mb-1 ml-4">`;
+                });
+                html += `<p class="mt-2">Correct: <input type="number" data-field="correct" value="${q.correctAnswer}" min="0" max="${q.options.length-1}" class="w-20 p-1 border rounded"></p>
+                    <p>Difficulty:
+                        <select data-field="diff" class="border rounded p-1">
+                            <option ${q.difficulty === 'EASY' ? 'selected' : ''}>EASY</option>
+                            <option ${q.difficulty === 'MEDIUM' ? 'selected' : ''}>MEDIUM</option>
+                            <option ${q.difficulty === 'HARD' ? 'selected' : ''}>HARD</option>
+                        </select>
+                    </p>
+                    <p>Date: <input type="text" data-field="date" value="${q.date || ''}" class="border rounded p-1"></p>
+                </div>`;
+            });
+            html += `<button id="save-edits" class="bg-blue-600 text-white px-6 py-2 rounded">Save Changes</button></div>`;
+            containerElement.innerHTML = html;
+            const saveBtn = document.getElementById('save-edits');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => saveEditorChanges(dpp.lectureId));
+            }
+        }
+
+        async function saveEditorChanges(lectureId) {
+            const container = document.getElementById('editor-form-container');
+            if (!container) {
+                alert('Editor container not found');
+                return;
+            }
+            const questionDivs = container.querySelectorAll('[data-question-id]');
+            const updatedQuestions = [];
+            questionDivs.forEach(div => {
+                const id = div.dataset.questionId;
+                const text = div.querySelector('[data-field="text"]').value;
+                const options = [];
+                for (let i = 0; i < 10; i++) {
+                    const optInput = div.querySelector(`[data-field="opt${i}"]`);
+                    if (optInput && optInput.value) options.push(optInput.value);
+                }
+                const correct = parseInt(div.querySelector('[data-field="correct"]').value);
+                const diff = div.querySelector('[data-field="diff"]').value;
+                const date = div.querySelector('[data-field="date"]').value;
+                updatedQuestions.push({ id, questionText: text, options, correctAnswer: correct, difficulty: diff, date });
+            });
+            try {
+                const res = await fetch(`/api/dpp/${lectureId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ questions: updatedQuestions }),
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert('✅ Changes saved successfully!');
+                } else {
+                    alert('❌ Failed to save: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // Start the app: check if already logged in
+        checkAdminAuth();
+        // ========== MOTIVATION SCHEDULE FUNCTIONS ==========
+async function loadMotivationSchedule() {
+  try {
+    const res = await fetch('/api/motivation', { credentials: 'include' });
+    const schedules = await res.json();
+    const active = schedules.find(s => s.isActive);
+    if (active) {
+      document.getElementById('motivation-start-date').value = active.startDate.split('T')[0];
+      document.getElementById('motivation-weeks-json').value = JSON.stringify(active.weeks, null, 2);
+      document.getElementById('motivation-active').checked = true;
+    } else {
+      // Clear fields if no active schedule
+      document.getElementById('motivation-start-date').value = '';
+      document.getElementById('motivation-weeks-json').value = '';
+      document.getElementById('motivation-active').checked = false;
+    }
+  } catch (err) {
+    console.error('Failed to load motivation schedule', err);
+  }
+}
+
+document.getElementById('save-motivation-btn').addEventListener('click', async () => {
+  const startDate = document.getElementById('motivation-start-date').value;
+  const weeksJson = document.getElementById('motivation-weeks-json').value;
+  const isActive = document.getElementById('motivation-active').checked;
+
+  if (!startDate || !weeksJson) {
+    alert('Please fill all fields');
+    return;
+  }
+
+  let weeks;
+  try {
+    weeks = JSON.parse(weeksJson);
+  } catch (e) {
+    alert('Invalid JSON format');
+    return;
+  }
+
+  const payload = { startDate, weeks, isActive };
+
+  const btn = document.getElementById('save-motivation-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+
+  try {
+    const res = await fetch('/api/motivation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      credentials: 'include'
+    });
+    const data = await res.json();
+    const resultDiv = document.getElementById('motivation-result');
+    resultDiv.classList.remove('hidden');
+    if (res.ok) {
+      resultDiv.className = 'mt-4 p-4 bg-green-50 border border-green-300 rounded';
+      resultDiv.innerHTML = '✅ Motivation schedule saved successfully!';
+    } else {
+      resultDiv.className = 'mt-4 p-4 bg-red-50 border border-red-300 rounded';
+      resultDiv.innerHTML = `❌ ${data.msg || 'Failed to save'}`;
+    }
+  } catch (err) {
+    alert('Network error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Schedule';
+  }
+});
+    </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Progress - Project02</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+      font-family: system-ui, sans-serif;
+    }
+    .progress-circle {
+      transition: stroke-dashoffset 1.2s ease;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="bg-white border-b-2 border-blue-600 shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">P</div>
+        <h1 class="text-2xl font-bold text-gray-800">Project02</h1>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="dashboard.html" class="text-gray-600 hover:text-blue-600 font-medium">Dashboard</a>
+        <a href="subjects.html" class="text-gray-600 hover:text-blue-600 font-medium">Subjects</a>
+        <button onclick="logout()"
+                class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-2xl text-sm font-medium">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-bold text-gray-800">My Progress</h2>
+      <p class="text-gray-600 mt-3">Track your preparation journey • Stay consistent</p>
+    </div>
+
+    <!-- Overall Progress Circle -->
+    <div class="flex justify-center mb-16">
+      <div class="relative w-64 h-64">
+        <svg class="w-64 h-64 -rotate-90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#e5e7eb" stroke-width="14"/>
+          <circle id="progress-circle" cx="60" cy="60" r="54" fill="none"
+                  stroke="#2563eb" stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="339.29" stroke-dashoffset="339.29"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div id="overall-percentage" class="text-6xl font-bold text-blue-600">0</div>
+          <div class="text-sm font-medium text-gray-500 tracking-widest">OVERALL PROGRESS</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-7 gap-10">
+
+      <!-- Subject Progress -->
+      <div class="lg:col-span-4">
+        <h3 class="text-2xl font-semibold mb-6 text-gray-800 flex items-center gap-3">
+          <i class="fa-solid fa-chart-bar"></i> Subject Progress
+        </h3>
+        <div id="subject-progress" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Progress Trend Graph -->
+      <div class="lg:col-span-3">
+        <h3 class="text-2xl font-semibold mb-6 text-gray-800 flex items-center gap-3">
+          <i class="fa-solid fa-chart-line text-blue-600"></i> Progress Trend
+        </h3>
+        <div class="bg-white rounded-3xl shadow p-6 h-full">
+          <div class="h-72">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recently Completed - Clean, Centered, Two Rows -->
+    <div class="mt-20">
+      <h3 class="text-2xl font-semibold mb-8 text-gray-800 flex items-center gap-3 justify-center">
+        <i class="fa-solid fa-check-circle text-green-600"></i> Recently Completed Lectures
+      </h3>
+      <div id="completed-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let trendChartInstance;
+
+    async function loadProgress() {
+      try {
+        const res = await fetch('/api/lectures', { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        const lectures = await res.json();
+
+        const completed = lectures.filter(l => l.completed === true);
+        const total = lectures.length;
+        const overallProgress = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+
+        // Overall Circle
+        const circle = document.getElementById('progress-circle');
+        const offset = 339.29 - (339.29 * overallProgress / 100);
+        circle.style.strokeDashoffset = offset;
+        document.getElementById('overall-percentage').textContent = overallProgress;
+
+        // Subject Progress
+        const subjects = {};
+        lectures.forEach(lec => {
+          if (!subjects[lec.subjectId]) {
+            subjects[lec.subjectId] = {
+              total: 0,
+              completed: 0,
+              name: lec.subjectId ? lec.subjectId.toUpperCase() : 'OTHER'
+            };
+          }
+          subjects[lec.subjectId].total++;
+          if (lec.completed) subjects[lec.subjectId].completed++;
+        });
+
+        let subjectHTML = '';
+        Object.keys(subjects).forEach(key => {
+          const s = subjects[key];
+          const prog = s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0;
+          subjectHTML += `
+            <div class="bg-white rounded-3xl p-6 shadow border border-gray-100">
+              <div class="flex justify-between mb-4">
+                <h4 class="font-semibold text-lg">${s.name}</h4>
+                <span class="font-bold text-xl text-blue-600">${prog}%</span>
+              </div>
+              <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-blue-600 rounded-full transition-all duration-700" style="width: ${prog}%"></div>
+              </div>
+              <p class="text-xs text-gray-500 mt-3">${s.completed} / ${s.total} lectures</p>
+            </div>`;
+        });
+        document.getElementById('subject-progress').innerHTML = subjectHTML ||
+          `<p class="col-span-2 text-center text-gray-500 py-12">No data yet. Start learning!</p>`;
+
+        // Progress Trend Graph
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if (trendChartInstance) trendChartInstance.destroy();
+
+        trendChartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+            datasets: [{
+              label: 'Progress %',
+              data: [28, 35, 42, 48, 45, 55, 62, 70],
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.08)',
+              borderWidth: 3,
+              tension: 0.35,
+              pointRadius: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { min: 20, max: 80, grid: { color: '#f3f4f6' } },
+              x: { grid: { color: '#f3f4f6' } }
+            }
+          }
+        });
+
+        // Recently Completed - Clean, Centered, Two Rows
+        let completedHTML = '';
+        if (completed.length === 0) {
+          completedHTML = `<p class="col-span-2 text-center text-gray-500 py-12">No completed lectures yet. Keep going!</p>`;
+        } else {
+          completed.slice(0, 8).forEach(lec => {
+            completedHTML += `
+              <div class="completed-card bg-white border border-gray-100 p-5 rounded-3xl flex gap-4 items-start">
+                <div class="text-3xl flex-shrink-0 mt-0.5">✅</div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-medium text-base leading-tight line-clamp-2 text-gray-800">${lec.title}</h4>
+                  <p class="text-xs text-gray-500 mt-1">${lec.subjectId ? lec.subjectId.toUpperCase() : ''}</p>
+                </div>
+              </div>`;
+          });
+        }
+        document.getElementById('completed-list').innerHTML = completedHTML;
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function logout() {
+      if (!confirm("Are you sure you want to logout?")) return;
+      await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = '/login.html';
+    }
+
+    window.onload = async () => {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        if (!res.ok) window.location.href = '/login.html';
+      } catch (e) {
+        window.location.href = '/login.html';
+      }
+      await loadProgress();
+    };
+  </script>
+</body>
+</html>
