@@ -284,7 +284,7 @@
   </div>
   <div class="flex items-center gap-4">
     <button id="installBtn" class="hidden flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-download"></i> Install as App</button>
-    <button id="admin-login-btn" onclick="showLoginModal()" class="hidden flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-lock"></i> Admin Login</button>
+    <!--<button id="admin-login-btn" onclick="showLoginModal()" class="hidden flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-lock"></i> Admin Login</button>-->
     <button id="manage-btn" onclick="showManageModal()" class="hidden flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium"><i class="fa-solid fa-plus"></i> Manage</button>
     <button onclick="logout()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
   </div>
@@ -330,7 +330,8 @@
       <button onclick="setManageMode(2)" id="btn2" class="manage-btn py-4 rounded-2xl font-medium">Add Lecture</button>
       <button onclick="setManageMode(3)" id="btn3" class="manage-btn py-4 rounded-2xl font-medium">Delete Chapter</button>
       <button onclick="setManageMode(4)" id="btn4" class="manage-btn py-4 rounded-2xl font-medium">Delete Lecture</button>
-      <button onclick="setManageMode(5)" id="btn5" class="manage-btn py-4 rounded-2xl font-medium col-span-2">Update Lecture (Add Notes/DPP)</button>
+      <button onclick="setManageMode(5)" id="btn5" class="manage-btn py-4 rounded-2xl font-medium">Update Lecture (Add Notes/DPP)</button>
+      <button onclick="setManageMode(6)" id="btn6" class="manage-btn py-4 rounded-2xl font-medium">Bulk JSON Upload</button>
     </div>
     <div id="form1" class="manage-form-container"><input id="chapter-title" type="text" placeholder="New Chapter Title" class="w-full border border-gray-300 rounded-2xl px-5 py-4 text-lg"></div>
     <div id="form2" class="manage-form-container hidden space-y-4">
@@ -359,6 +360,27 @@
       <input id="update-pdf" type="text" placeholder="Class PDF Link (Google Drive)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
       <input id="update-dpp" type="text" placeholder="DPP Link (Google Drive)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
     </div>
+    <div id="form6" class="manage-form-container hidden space-y-4">
+  <p class="text-sm text-gray-500">Paste a JSON with chapters and their lectures.</p>
+  <textarea id="bulk-json" rows="12" class="w-full border border-gray-300 rounded-2xl px-5 py-4 font-mono text-sm" placeholder='{
+  "chapters": [
+    {
+      "title": "Chapter Name",
+      "lectures": [
+        {
+          "title": "Lecture Title",
+          "youtubeId": "abc123",
+          "date": "01/01/2024",
+          "duration": "45m",
+          "imageUrl": "https://…",
+          "pdfLink": "",
+          "dppLink": ""
+        }
+      ]
+    }
+  ]
+}'></textarea>
+</div>
     <div class="flex gap-4 mt-8">
       <button onclick="hideManageModal()" class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium">Cancel</button>
       <button onclick="executeManageAction()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Confirm Action</button>
@@ -367,7 +389,7 @@
 </div>
 
 <!-- Admin Login Modal -->
-<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+<!--<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
   <div class="bg-white rounded-3xl p-8 w-full max-w-sm mx-4">
     <h3 class="text-xl font-semibold mb-4">Admin Login</h3>
     <p class="text-gray-600 mb-6">Use your admin account</p>
@@ -378,7 +400,7 @@
       <button onclick="adminLogin()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Login as Admin</button>
     </div>
   </div>
-</div>
+</div>-->
 
 <!-- Advanced Video Player Modal - with fresh iframe recreation -->
 <div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
@@ -470,6 +492,31 @@ let allLectures = [];
 let currentPdfLink = '';
 let currentDppLink = '';
 
+// async function checkAuth() {
+//   try {
+//     const res = await fetch('/api/me', { credentials: 'include' });
+//     if (!res.ok) throw new Error();
+//     const data = await res.json();
+//     if (data.success) {
+//       if (data.user.role === 'admin') {
+//         document.getElementById('manage-btn').classList.remove('hidden');
+//         document.getElementById('admin-login-btn').classList.add('hidden');
+//         isAdmin = true;
+//       } else {
+//         // Student logged in - show admin login button
+//         document.getElementById('admin-login-btn').classList.remove('hidden');
+//       }
+//     } else {
+//       // Not logged in - show admin login button
+//       document.getElementById('admin-login-btn').classList.remove('hidden');
+//     }
+//   } catch (err) {
+//     // Not logged in - show admin login button
+//     document.getElementById('admin-login-btn').classList.remove('hidden');
+//   }
+// }
+
+//adding this function in place of above function to remove the login admin button on the lecture page
 async function checkAuth() {
   try {
     const res = await fetch('/api/me', { credentials: 'include' });
@@ -478,25 +525,16 @@ async function checkAuth() {
     if (data.success) {
       if (data.user.role === 'admin') {
         document.getElementById('manage-btn').classList.remove('hidden');
-        document.getElementById('admin-login-btn').classList.add('hidden');
         isAdmin = true;
-      } else {
-        // Student logged in - show admin login button
-        document.getElementById('admin-login-btn').classList.remove('hidden');
       }
-    } else {
-      // Not logged in - show admin login button
-      document.getElementById('admin-login-btn').classList.remove('hidden');
+      // students: manage button stays hidden, no admin-login button
     }
-  } catch (err) { 
-    // Not logged in - show admin login button
-    document.getElementById('admin-login-btn').classList.remove('hidden');
-  }
+  } catch (err) { /* not logged in – nothing to show */ }
 }
 
-function showLoginModal() {
-  document.getElementById('loginModal').classList.remove('hidden');
-}
+// function showLoginModal() {
+//   document.getElementById('loginModal').classList.remove('hidden');
+// }
 
 async function logout() {
   if (!confirm("Are you sure you want to logout?")) return;
@@ -1040,9 +1078,9 @@ function showManageModal() { manageMode = 1; document.getElementById('manage-mod
 function hideManageModal() { document.getElementById('manage-modal').classList.add('hidden'); }
 function setManageMode(mode) { manageMode = mode; updateManageUI(); }
 function updateManageUI() {
-  for (let i=1;i<=5;i++) { const btn = document.getElementById(`btn${i}`); if(btn) btn.classList.remove('manage-btn-active'); }
+  for (let i=1;i<=6;i++) { const btn = document.getElementById(`btn${i}`); if(btn) btn.classList.remove('manage-btn-active'); }
   const activeBtn = document.getElementById(`btn${manageMode}`); if(activeBtn) activeBtn.classList.add('manage-btn-active');
-  for(let i=1;i<=5;i++){ const form = document.getElementById(`form${i}`); if(form) form.classList.toggle('hidden', i !== manageMode); }
+  for(let i=1;i<=6;i++){ const form = document.getElementById(`form${i}`); if(form) form.classList.toggle('hidden', i !== manageMode); }
   if(manageMode === 2) populateLectureChapterSelect();
   if(manageMode === 3) populateDeleteChapterSelect();
   if(manageMode === 4) populateDeleteLectureChapterSelect();
@@ -1158,46 +1196,46 @@ async function loadLectureForUpdate() {
   if(!lectureId) return;
   try { const res = await fetch(`/api/lectures/${lectureId}`, { credentials: 'include' }); if(!res.ok) throw new Error(); const lec = await res.json(); document.getElementById('update-title').value = lec.title || ''; document.getElementById('update-youtube').value = lec.youtubeId || ''; document.getElementById('update-image').value = lec.imageUrl || ''; document.getElementById('update-pdf').value = lec.pdfLink || ''; document.getElementById('update-dpp').value = lec.dppLink || ''; } catch(e) { showToast("Could not load lecture details.", "error"); }
 }
-async function adminLogin() {
-  const email = document.getElementById('adminEmail').value.trim();
-  const password = document.getElementById('adminPass').value.trim();
-  if(!email || !password) { 
-    showToast("Please enter email and password", "error"); 
-    return; 
-  }
-  
-  const loginBtn = document.querySelector('#loginModal .bg-blue-600');
-  const originalText = loginBtn.textContent;
-  loginBtn.textContent = 'Logging in...';
-  loginBtn.disabled = true;
-  
-  try {
-    const res = await fetch('/api/login', { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify({ email, password }), 
-      credentials: 'include' 
-    });
-    const data = await res.json();
-    if(data.success && data.user.role === 'admin') {
-      hideLoginModal(); 
-      isAdmin = true; 
-      document.getElementById('manage-btn').classList.remove('hidden');
-      document.getElementById('admin-login-btn').classList.add('hidden');
-      showToast("✅ Admin logged in successfully!", "success");
-      // Clear password field
-      document.getElementById('adminPass').value = '';
-    } else {
-      showToast(data.msg || 'Invalid admin credentials', "error");
-    }
-  } catch(e) { 
-    showToast("Cannot connect to server", "error"); 
-  } finally {
-    loginBtn.textContent = originalText;
-    loginBtn.disabled = false;
-  }
-}
-function hideLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+// async function adminLogin() {
+//   const email = document.getElementById('adminEmail').value.trim();
+//   const password = document.getElementById('adminPass').value.trim();
+//   if(!email || !password) {
+//     showToast("Please enter email and password", "error");
+//     return;
+//   }
+//
+//   const loginBtn = document.querySelector('#loginModal .bg-blue-600');
+//   const originalText = loginBtn.textContent;
+//   loginBtn.textContent = 'Logging in...';
+//   loginBtn.disabled = true;
+//
+//   try {
+//     const res = await fetch('/api/login', {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({ email, password }),
+//       credentials: 'include'
+//     });
+//     const data = await res.json();
+//     if(data.success && data.user.role === 'admin') {
+//       hideLoginModal();
+//       isAdmin = true;
+//       document.getElementById('manage-btn').classList.remove('hidden');
+//       document.getElementById('admin-login-btn').classList.add('hidden');
+//       showToast("✅ Admin logged in successfully!", "success");
+//       // Clear password field
+//       document.getElementById('adminPass').value = '';
+//     } else {
+//       showToast(data.msg || 'Invalid admin credentials', "error");
+//     }
+//   } catch(e) {
+//     showToast("Cannot connect to server", "error");
+//   } finally {
+//     loginBtn.textContent = originalText;
+//     loginBtn.disabled = false;
+//   }
+// }
+// function hideLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
 async function executeManageAction() {
   if (!isAdmin) { 
     showToast("Please login as Admin first", "error"); 
@@ -1360,7 +1398,32 @@ async function executeManageAction() {
         showToast(data.msg || "Failed to update lecture", "error");
       }
     }
-    
+    else if (manageMode === 6) {
+  const jsonText = document.getElementById('bulk-json').value.trim();
+  if (!jsonText) { showToast("Please paste JSON", "error"); return; }
+
+  let payload;
+  try { payload = JSON.parse(jsonText); }
+  catch (e) { showToast("Invalid JSON format", "error"); return; }
+
+  // subjectId is taken from the URL
+  payload.subjectId = subjectId;
+
+  const res = await fetch('/api/lectures/bulk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (res.ok) {
+    showToast(`✅ ${data.createdLectures} lectures added!`, "success");
+    document.getElementById('bulk-json').value = '';
+    await loadData();
+  } else {
+    showToast(data.error || "Failed to add lectures", "error");
+  }
+}
     // Refresh all dropdowns in the modal
     if (manageMode === 2) await populateLectureChapterSelect();
     if (manageMode === 3) await populateDeleteChapterSelect();
