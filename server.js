@@ -330,6 +330,50 @@ app.post('/api/lectures/:id/complete', authenticate, async (req, res) => {
     res.json({ success: true });
 });
 
+// Bulk create chapters and lectures from JSON
+app.post('/api/lectures/bulk', authenticate, isAdmin, async (req, res) => {
+    try {
+        const { subjectId, chapters } = req.body;
+        if (!subjectId || !Array.isArray(chapters) || chapters.length === 0) {
+            return res.status(400).json({ error: 'subjectId and chapters array are required' });
+        }
+
+        let createdCount = 0;
+
+        for (const ch of chapters) {
+            if (!ch.title || !Array.isArray(ch.lectures)) continue;
+
+            // Find or create the chapter
+            let chapter = await Chapter.findOne({ subjectId, title: ch.title });
+            if (!chapter) {
+                chapter = await Chapter.create({ subjectId, title: ch.title, order: Date.now() });
+            }
+
+            // Create lectures for this chapter
+            for (const lec of ch.lectures) {
+                if (!lec.title) continue;
+                await Lecture.create({
+                    subjectId,
+                    chapterId: chapter._id.toString(),
+                                     title: lec.title,
+                                     youtubeId: lec.youtubeId || '',
+                                     date: lec.date || '',
+                                     duration: lec.duration || '45m',
+                                     imageUrl: lec.imageUrl || '',
+                                     pdfLink: lec.pdfLink || '',
+                                     dppLink: lec.dppLink || ''
+                });
+                createdCount++;
+            }
+        }
+
+        res.json({ success: true, createdLectures: createdCount });
+    } catch (error) {
+        console.error('Bulk upload error:', error);
+        res.status(500).json({ error: 'Server error while adding lectures' });
+    }
+});
+
 // ---------- LIVE SCHEDULES ----------
 app.get('/api/live/today', authenticate, async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
