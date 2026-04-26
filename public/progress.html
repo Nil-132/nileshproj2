@@ -97,9 +97,29 @@
 
   <script>
     let trendChartInstance;
+    let subjectNameCache = {};
+
+    async function loadSubjects() {
+      try {
+        const res = await fetch('/api/subjects', { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load subjects');
+        const subjects = await res.json();
+        // Create cache: subjectId -> subject name
+        subjects.forEach(sub => {
+          subjectNameCache[sub._id] = sub.name;
+        });
+        return subjects;
+      } catch (err) {
+        console.error('Error loading subjects:', err);
+        return [];
+      }
+    }
 
     async function loadProgress() {
       try {
+        // First load subjects to get name mapping
+        await loadSubjects();
+        
         const res = await fetch('/api/lectures', { credentials: 'include' });
         if (!res.ok) throw new Error();
         const lectures = await res.json();
@@ -114,18 +134,22 @@
         circle.style.strokeDashoffset = offset;
         document.getElementById('overall-percentage').textContent = overallProgress;
 
-        // Subject Progress
+        // Subject Progress - using subject name from cache
         const subjects = {};
         lectures.forEach(lec => {
-          if (!subjects[lec.subjectId]) {
-            subjects[lec.subjectId] = {
+          const subjectId = lec.subjectId;
+          // Get subject name from cache, or use "Unknown" if not found
+          const subjectName = subjectNameCache[subjectId] || (subjectId ? subjectId.toUpperCase() : 'OTHER');
+          
+          if (!subjects[subjectId]) {
+            subjects[subjectId] = {
               total: 0,
               completed: 0,
-              name: lec.subjectId ? lec.subjectId.toUpperCase() : 'OTHER'
+              name: subjectName
             };
           }
-          subjects[lec.subjectId].total++;
-          if (lec.completed) subjects[lec.subjectId].completed++;
+          subjects[subjectId].total++;
+          if (lec.completed) subjects[subjectId].completed++;
         });
 
         let subjectHTML = '';
@@ -135,7 +159,7 @@
           subjectHTML += `
             <div class="bg-white rounded-3xl p-6 shadow border border-gray-100">
               <div class="flex justify-between mb-4">
-                <h4 class="font-semibold text-lg">${s.name}</h4>
+                <h4 class="font-semibold text-lg">${escapeHtml(s.name)}</h4>
                 <span class="font-bold text-xl text-blue-600">${prog}%</span>
               </div>
               <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -147,22 +171,51 @@
         document.getElementById('subject-progress').innerHTML = subjectHTML ||
           `<p class="col-span-2 text-center text-gray-500 py-12">No data yet. Start learning!</p>`;
 
-        // Progress Trend Graph
+        // Progress Trend Graph - using real data from completions over time
+        const progressOverTime = [];
+        const completedLectures = lectures.filter(l => l.completed && l.completedAt);
+        completedLectures.sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
+        
+        let cumulative = 0;
+        const monthlyData = {};
+        
+        completedLectures.forEach(lec => {
+          if (lec.completedAt) {
+            const date = new Date(lec.completedAt);
+            const monthYear = `${date.getFullYear()}-${date.getMonth() + 1}`;
+            if (!monthlyData[monthYear]) monthlyData[monthYear] = 0;
+            monthlyData[monthYear]++;
+          }
+        });
+        
+        const months = Object.keys(monthlyData).sort();
+        let runningTotal = 0;
+        const percentages = months.map(month => {
+          runningTotal += monthlyData[month];
+          return total > 0 ? Math.round((runningTotal / total) * 100) : 0;
+        });
+        
+        const monthLabels = months.map(m => {
+          const [year, month] = m.split('-');
+          return new Date(year, month - 1).toLocaleString('default', { month: 'short' });
+        });
+
         const ctx = document.getElementById('trendChart').getContext('2d');
         if (trendChartInstance) trendChartInstance.destroy();
 
         trendChartInstance = new Chart(ctx, {
           type: 'line',
           data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+            labels: monthLabels.length ? monthLabels : ['No data yet'],
             datasets: [{
               label: 'Progress %',
-              data: [28, 35, 42, 48, 45, 55, 62, 70],
+              data: percentages.length ? percentages : [0],
               borderColor: '#2563eb',
               backgroundColor: 'rgba(37, 99, 235, 0.08)',
               borderWidth: 3,
               tension: 0.35,
-              pointRadius: 3
+              pointRadius: 3,
+              fill: true
             }]
           },
           options: {
@@ -170,24 +223,30 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              y: { min: 20, max: 80, grid: { color: '#f3f4f6' } },
-              x: { grid: { color: '#f3f4f6' } }
+              y: { min: 0, max: 100, grid: { color: '#f3f4f6' }, title: { display: true, text: 'Progress (%)' } },
+              x: { grid: { color: '#f3f4f6' }, title: { display: true, text: 'Month' } }
             }
           }
         });
 
-        // Recently Completed - Clean, Centered, Two Rows
+        // Recently Completed - with subject names
         let completedHTML = '';
-        if (completed.length === 0) {
+        const recentCompleted = completed
+          .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+          .slice(0, 8);
+          
+        if (recentCompleted.length === 0) {
           completedHTML = `<p class="col-span-2 text-center text-gray-500 py-12">No completed lectures yet. Keep going!</p>`;
         } else {
-          completed.slice(0, 8).forEach(lec => {
+          recentCompleted.forEach(lec => {
+            const subjectName = subjectNameCache[lec.subjectId] || (lec.subjectId ? lec.subjectId.toUpperCase() : '');
             completedHTML += `
               <div class="completed-card bg-white border border-gray-100 p-5 rounded-3xl flex gap-4 items-start">
                 <div class="text-3xl flex-shrink-0 mt-0.5">✅</div>
                 <div class="flex-1 min-w-0">
-                  <h4 class="font-medium text-base leading-tight line-clamp-2 text-gray-800">${lec.title}</h4>
-                  <p class="text-xs text-gray-500 mt-1">${lec.subjectId ? lec.subjectId.toUpperCase() : ''}</p>
+                  <h4 class="font-medium text-base leading-tight line-clamp-2 text-gray-800">${escapeHtml(lec.title)}</h4>
+                  <p class="text-xs text-gray-500 mt-1">${escapeHtml(subjectName)}</p>
+                  <p class="text-xs text-gray-400 mt-1">${lec.completedAt ? new Date(lec.completedAt).toLocaleDateString() : ''}</p>
                 </div>
               </div>`;
           });
@@ -197,6 +256,13 @@
       } catch (err) {
         console.error(err);
       }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     async function logout() {
