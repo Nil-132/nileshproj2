@@ -7,21 +7,15 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
+    /* --- unchanged styles from your original --- */
     body { font-family: system-ui, sans-serif; }
     .live-card { transition: all 0.3s ease; }
     .live-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
     .live-dot { animation: pulse 2s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-    .tab-active {
-      background-color: #2563eb !important;
-      color: white !important;
-    }
-    .modal-content {
-      max-height: 92vh;
-      overflow-y: auto;
-    }
+    .tab-active { background-color: #2563eb !important; color: white !important; }
+    .modal-content { max-height: 92vh; overflow-y: auto; }
 
-    /* ========== Video Player Styles (copied from lectures.html) ========== */
     .video-modal-overlay {
       background: rgba(0, 0, 0, 0.85);
       backdrop-filter: blur(8px);
@@ -39,161 +33,67 @@
       display: flex;
       flex-direction: column;
     }
-    @media (max-width: 640px) {
-      .player-card { width: 98%; border-radius: 1rem; }
-    }
-    .video-stage {
-      aspect-ratio: 16 / 9;
-      background: #000;
-      position: relative;
-      flex-shrink: 0;
-    }
+    @media (max-width: 640px) { .player-card { width: 98%; border-radius: 1rem; } }
+    .video-stage { aspect-ratio: 16 / 9; background: #000; position: relative; flex-shrink: 0; }
     .center-play-icon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 80px;
-      height: 80px;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(8px);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 2.5rem;
-      border: 2px solid rgba(255,255,255,0.3);
-      transition: opacity 0.2s;
-      pointer-events: none;
-      z-index: 25;
-      opacity: 0;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 80px; height: 80px; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 2.5rem; border: 2px solid rgba(255,255,255,0.3);
+      transition: opacity 0.2s; pointer-events: none; z-index: 25; opacity: 0;
     }
     .custom-controls {
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(12px);
-      padding: 14px 20px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 16px;
+      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(12px);
+      padding: 14px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
       border-top: 1px solid rgba(255,255,255,0.2);
       transition: opacity 0.3s ease, visibility 0.3s ease;
-      opacity: 1;
-      visibility: visible;
-      min-height: 70px;
+      opacity: 1; visibility: visible; min-height: 70px;
     }
-    .custom-controls.hide-controls {
-      opacity: 0;
-      visibility: hidden;
-    }
-    .player-card:fullscreen .custom-controls {
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(12px);
-    }
+    .custom-controls.hide-controls { opacity: 0; visibility: hidden; }
+    .player-card:fullscreen .custom-controls { background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(12px); }
     .ctrl-btn {
-      background: transparent;
-      border: none;
-      color: #f0f0f0;
-      width: 44px;
-      height: 44px;
-      border-radius: 40px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 1.3rem;
+      background: transparent; border: none; color: #f0f0f0; width: 44px; height: 44px;
+      border-radius: 40px; display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; font-size: 1.3rem;
     }
     .ctrl-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
     .ctrl-btn:active { transform: scale(0.96); }
-    /* 10s seek buttons style */
-    .ctrl-btn.seek-ten {
-      width: auto;
-      padding: 0 12px;
-      gap: 6px;
-      font-weight: 500;
-      font-size: 1rem;
-    }
-    .ctrl-btn.seek-ten i {
-      font-size: 1.1rem;
-    }
+    .ctrl-btn.seek-ten { width: auto; padding: 0 12px; gap: 6px; font-weight: 500; font-size: 1rem; }
+    .ctrl-btn.seek-ten i { font-size: 1.1rem; }
     @media (max-width: 640px) {
-      .ctrl-btn.seek-ten {
-        padding: 0 10px;
-        font-size: 0.85rem;
-      }
-      .ctrl-btn.seek-ten i {
-        font-size: 0.9rem;
-      }
+      .ctrl-btn.seek-ten { padding: 0 10px; font-size: 0.85rem; }
+      .ctrl-btn.seek-ten i { font-size: 0.9rem; }
     }
     .progress-bar-bg {
-      flex: 1;
-      height: 8px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: height 0.1s;
+      flex: 1; height: 8px; background: rgba(255,255,255,0.3); border-radius: 8px;
+      cursor: pointer; transition: height 0.1s;
     }
     .progress-bar-bg:hover { height: 10px; background: rgba(255,255,255,0.5); }
     .progress-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #ff4757, #ff6b81);
-      border-radius: 8px;
-      pointer-events: none;
+      width: 0%; height: 100%; background: linear-gradient(90deg, #ff4757, #ff6b81);
+      border-radius: 8px; pointer-events: none;
     }
     .time-display {
-      font-family: monospace;
-      font-size: 1rem;
-      background: rgba(0,0,0,0.6);
-      padding: 6px 12px;
-      border-radius: 24px;
-      letter-spacing: 0.5px;
-      color: #fff;
-      font-weight: 500;
+      font-family: monospace; font-size: 1rem; background: rgba(0,0,0,0.6);
+      padding: 6px 12px; border-radius: 24px; letter-spacing: 0.5px; color: #fff; font-weight: 500;
     }
     .volume-slider {
-      width: 90px;
-      height: 5px;
-      -webkit-appearance: none;
-      background: rgba(255,255,255,0.3);
-      border-radius: 5px;
-      outline: none;
-      cursor: pointer;
+      width: 90px; height: 5px; -webkit-appearance: none; background: rgba(255,255,255,0.3);
+      border-radius: 5px; outline: none; cursor: pointer;
     }
     .volume-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      background: #ff6b81;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 0 2px white;
+      -webkit-appearance: none; width: 16px; height: 16px; background: #ff6b81;
+      border-radius: 50%; cursor: pointer; box-shadow: 0 0 2px white;
     }
     .speed-dropdown, .quality-dropdown {
-      background: rgba(0,0,0,0.8);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      padding: 8px 14px;
-      border-radius: 32px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      outline: none;
-      backdrop-filter: blur(4px);
+      background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.3);
+      color: white; padding: 8px 14px; border-radius: 32px; font-size: 0.9rem;
+      font-weight: 500; cursor: pointer; outline: none; backdrop-filter: blur(4px);
     }
-    .speed-dropdown option, .quality-dropdown option {
-      background: #1f2937;
-      color: white;
-    }
+    .speed-dropdown option, .quality-dropdown option { background: #1f2937; color: white; }
     .loading-spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid rgba(255,255,255,0.2);
-      border-top: 4px solid #ff6b81;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2);
+      border-top: 4px solid #ff6b81; border-radius: 50%; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     @media (max-width: 640px) {
@@ -204,28 +104,14 @@
       .time-display { font-size: 0.8rem; padding: 4px 8px; }
       .custom-controls { padding: 12px 12px; gap: 12px; min-height: 60px; }
     }
-    /* Toast styles (for player errors) */
     #toast-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px;
     }
     .toast {
-      background: #1f2937;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 200px;
-      animation: slideIn 0.3s ease;
-      backdrop-filter: blur(8px);
+      background: #1f2937; color: white; padding: 12px 20px; border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; align-items: center;
+      gap: 12px; min-width: 200px; animation: slideIn 0.3s ease; backdrop-filter: blur(8px);
       border-left: 4px solid;
     }
     .toast.success { border-left-color: #10b981; }
@@ -239,7 +125,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-  <!-- Navbar -->
+  <!-- Navbar (identical) -->
   <nav class="bg-white shadow-md px-8 py-4 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <h1 class="text-3xl font-bold text-blue-600">My PW</h1>
@@ -263,16 +149,12 @@
     <p class="text-gray-600 mb-8">Today's Live Sessions</p>
 
     <!-- Category Tabs -->
-    <div class="flex flex-wrap gap-2 mb-8 border-b pb-4" id="category-tabs">
-      <!-- Populated by JS -->
-    </div>
+    <div class="flex flex-wrap gap-2 mb-8 border-b pb-4" id="category-tabs"></div>
 
-    <div id="live-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Populated by JS -->
-    </div>
+    <div id="live-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
   </div>
 
-  <!-- Professional Add Schedule Modal (unchanged) -->
+  <!-- Add Schedule Modal (unchanged) -->
   <div id="add-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[200] p-4">
     <div class="bg-white rounded-3xl w-full max-w-lg modal-content shadow-2xl">
       <div class="p-8">
@@ -333,10 +215,11 @@
     </div>
   </div>
 
-  <!-- Advanced Video Player Modal (copied from lectures.html) -->
+  <!-- VIDEO PLAYER MODAL (identical to lectures page, with playsinline fix) -->
   <div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
     <div class="player-card w-full max-w-5xl">
       <div class="video-stage relative" id="videoStageContainer">
+        <!-- iframe dynamically inserted here -->
         <div id="videoOverlay" class="absolute inset-0 z-20 cursor-pointer"></div>
         <div id="centerPlayIcon" class="center-play-icon"><i class="fas fa-play"></i></div>
         <div id="messagePanel" class="absolute inset-0 bg-black/80 backdrop-blur-xl z-40 flex items-center justify-center flex-col gap-4 text-white hidden">
@@ -375,7 +258,7 @@
   <div id="toast-container"></div>
 
   <script>
-    // ========== TOAST (for player errors & success) ==========
+    // ========== TOAST NOTIFICATIONS ==========
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -430,13 +313,16 @@
             else if (now >= startTime && now <= endTime) status = 'LIVE';
             else status = 'Completed';
 
+            // Save the raw youtubeId to pass to playVideo (will be cleaned there)
+            const rawYt = live.youtubeId || '';
+
             let btnHTML = '';
             if (status === 'Upcoming') {
               btnHTML = `<button onclick="notifyMe('${live.title}')" class="w-full py-3.5 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-medium">Notify Me</button>`;
             } else if (status === 'LIVE') {
-              btnHTML = `<button onclick="playVideo('${live.youtubeId || ''}')" class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-medium flex items-center justify-center gap-2"><span class="live-dot w-3 h-3 bg-white rounded-full"></span> Join Live Now</button>`;
+              btnHTML = `<button onclick="playVideo('${rawYt}')" class="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-medium flex items-center justify-center gap-2"><span class="live-dot w-3 h-3 bg-white rounded-full"></span> Join Live Now</button>`;
             } else {
-              btnHTML = `<button onclick="playVideo('${live.youtubeId || ''}')" class="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-medium">Watch Recording</button>`;
+              btnHTML = `<button onclick="playVideo('${rawYt}')" class="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-medium">Watch Recording</button>`;
             }
 
             html += `
@@ -474,8 +360,7 @@
     function showAddModal() {
       document.getElementById('add-modal').classList.remove('hidden');
       document.getElementById('modal-error').classList.add('hidden');
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('add-date').value = today;
+      document.getElementById('add-date').value = new Date().toISOString().split('T')[0];
       document.getElementById('add-hours').value = '';
       document.getElementById('add-minutes').value = '';
     }
@@ -486,6 +371,7 @@
       errorDiv.classList.remove('hidden');
       errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
     async function addLiveSchedule() {
       const title = document.getElementById('add-title').value.trim();
       const category = document.getElementById('add-category').value;
@@ -501,10 +387,10 @@
       if (totalDuration <= 0) { showModalError("⚠️ Please specify duration (Hours or Minutes)"); return; }
       const scheduledTime = new Date(`${date} ${time}`);
       if (scheduledTime < new Date()) { showModalError("⚠️ You cannot schedule a live class in the past!"); return; }
-      
-      // Clean YouTube ID before storing (so we only store the pure ID)
+
+      // Clean up YouTube ID before storing
       const cleanId = extractYouTubeId(youtubeInput);
-      
+
       try {
         await fetch('/api/live', {
           method: 'POST',
@@ -517,6 +403,7 @@
         showToast("✅ Live schedule added successfully!", "success");
       } catch (err) { showToast("❌ Failed to add schedule", "error"); }
     }
+
     async function deleteLive(id) {
       if (!confirm("Delete this live schedule?")) return;
       try {
@@ -525,6 +412,7 @@
         showToast("✅ Schedule deleted successfully!", "success");
       } catch (err) { showToast("❌ Failed to delete schedule", "error"); }
     }
+
     function notifyMe(title) { showToast(`🛎️ You will be notified when "${title}" starts!`, "info"); }
 
     async function logout() {
@@ -533,7 +421,29 @@
       window.location.href = 'login.html';
     }
 
-    // ========== ADVANCED VIDEO PLAYER (identical to lectures.html) ==========
+    // ========== YouTube ID Extractor (handles normal videos, shorts, any URL) ==========
+    function extractYouTubeId(input) {
+      if (!input) return '';
+      // Already a pure 11-character ID
+      if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+      // Shorts link (e.g. https://youtube.com/shorts/abc123?feature=share)
+      const shortsMatch = input.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
+      if (shortsMatch) return shortsMatch[1];
+      // Other common patterns
+      const patterns = [
+        /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+        /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/
+      ];
+      for (const p of patterns) {
+        const match = input.match(p);
+        if (match) return match[1];
+      }
+      return ''; // invalid input
+    }
+
+    // ========== ADVANCED VIDEO PLAYER (same as lectures page) ==========
     let player = null;
     let playerReady = false;
     let currentVideoId = null;
@@ -617,7 +527,8 @@
       const iframe = document.createElement('iframe');
       iframe.id = 'youtubeIframe';
       iframe.className = 'absolute inset-0 w-full h-full border-0 pointer-events-none';
-      iframe.allow = 'autoplay; fullscreen; encrypted-media';
+      // ---------- IMPORTANT FIX: allow playsinline to prevent app redirect ----------
+      iframe.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture; web-share; playsinline';
       iframe.allowFullscreen = true;
       return iframe;
     }
@@ -634,7 +545,18 @@
       destroyPlayer();
       const newIframe = createFreshIframe();
       videoStageContainer.insertBefore(newIframe, videoStageContainer.firstChild);
-      const params = { controls: 0, disablekb: 1, modestbranding: 1, rel: 0, showinfo: 0, iv_load_policy: 3, fs: 0, playsinline: 1, enablejsapi: 1, origin: window.location.origin };
+      const params = {
+        controls: 0,
+        disablekb: 1,
+        modestbranding: 1,
+        rel: 0,
+        showinfo: 0,
+        iv_load_policy: 3,
+        fs: 0,
+        playsinline: 1,  // also in URL, crucial for iOS
+        enablejsapi: 1,
+        origin: window.location.origin
+      };
       newIframe.src = `https://www.youtube.com/embed/${videoId}?${new URLSearchParams(params).toString()}`;
       player = new YT.Player('youtubeIframe', {
         events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange, onError: onPlayerError }
@@ -779,27 +701,19 @@
         case 'f': case 'F': e.preventDefault(); toggleFullscreen(); break;
       }
     }
-    // 10s seek buttons
-    if (rewind10Btn) {
-      rewind10Btn.addEventListener('click', () => {
-        if (!player || !playerReady) { showToast("Video not ready", "info"); return; }
-        let newTime = Math.max(0, player.getCurrentTime() - 10);
-        player.seekTo(newTime, true);
-        updateTimeDisplay();
-        showControls();
-      });
-    }
-    if (forward10Btn) {
-      forward10Btn.addEventListener('click', () => {
-        if (!player || !playerReady) { showToast("Video not ready", "info"); return; }
-        let newTime = Math.min(player.getDuration(), player.getCurrentTime() + 10);
-        player.seekTo(newTime, true);
-        updateTimeDisplay();
-        showControls();
-      });
-    }
 
-    // Event listeners
+    // 10s seek buttons
+    if (rewind10Btn) rewind10Btn.addEventListener('click', () => {
+      if (!player || !playerReady) { showToast("Video not ready", "info"); return; }
+      let newTime = Math.max(0, player.getCurrentTime() - 10);
+      player.seekTo(newTime, true); updateTimeDisplay(); showControls();
+    });
+    if (forward10Btn) forward10Btn.addEventListener('click', () => {
+      if (!player || !playerReady) { showToast("Video not ready", "info"); return; }
+      let newTime = Math.min(player.getDuration(), player.getCurrentTime() + 10);
+      player.seekTo(newTime, true); updateTimeDisplay(); showControls();
+    });
+
     playPauseBtn.addEventListener('click', () => { if (player && playerReady) { (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo(); showControls(); } });
     progressBarBg.addEventListener('click', seekToPosition);
     progressBarBg.addEventListener('mousedown', handleProgressDragStart);
@@ -812,42 +726,20 @@
     document.addEventListener('keydown', handleVideoKeys);
     window.addEventListener('fullscreenchange', () => {
       fullscreenBtn.innerHTML = document.fullscreenElement ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
-      if (!document.fullscreenElement) { document.body.style.overflow = ''; }
+      if (!document.fullscreenElement) document.body.style.overflow = '';
     });
     speedDropdown.addEventListener('change', changeSpeed);
     qualityDropdown.addEventListener('change', changeQuality);
 
-    // ========== YOUTUBE ID EXTRACTION ==========
-    function extractYouTubeId(input) {
-      if (!input) return '';
-      // Already a pure ID (exactly 11 alphanumeric characters)
-      if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
-      // Shorts link
-      const shortsMatch = input.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
-      if (shortsMatch) return shortsMatch[1];
-      // Other common URL patterns
-      const patterns = [
-        /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
-        /youtu\.be\/([a-zA-Z0-9_-]{11})/,
-        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/
-      ];
-      for (const p of patterns) {
-        const match = input.match(p);
-        if (match) return match[1];
-      }
-      // If nothing matched, return empty (invalid input)
-      return '';
-    }
-
-    // Main function to play video (called from live cards)
+    // ---------- PUBLIC VIDEO PLAYER FUNCTION ----------
     function playVideo(rawInput) {
       const videoId = extractYouTubeId(rawInput);
       if (!videoId) {
         showToast("No valid YouTube video ID found. Please check the link.", "error");
         return;
       }
-      closeVideoModal();
+      closeVideoModal();  // destroy any existing player
+      // Short delay ensures DOM cleanup before building new iframe
       setTimeout(() => {
         currentVideoId = videoId;
         modal.classList.remove('hidden');
@@ -867,4 +759,4 @@
     };
   </script>
 </body>
-  </html>
+</html>
