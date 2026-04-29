@@ -320,8 +320,8 @@
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">YouTube Video ID (optional)</label>
-            <input id="add-youtube" type="text" placeholder="e.g. dQw4w9wgxcq"
+            <label class="block text-sm font-medium text-gray-700 mb-2">YouTube Video ID or URL (optional)</label>
+            <input id="add-youtube" type="text" placeholder="e.g. dQw4w9wgxcq or full shorts link"
                    class="w-full border border-gray-300 rounded-2xl px-5 py-4 focus:outline-none focus:border-blue-600">
           </div>
         </div>
@@ -493,7 +493,7 @@
       const time = document.getElementById('add-time').value;
       const hours = parseInt(document.getElementById('add-hours').value) || 0;
       const minutes = parseInt(document.getElementById('add-minutes').value) || 0;
-      const youtubeId = document.getElementById('add-youtube').value.trim();
+      const youtubeInput = document.getElementById('add-youtube').value.trim();
       const totalDuration = (hours * 60) + minutes;
       document.getElementById('modal-error').classList.add('hidden');
       if (!title) { showModalError("⚠️ Please enter the lecture title"); return; }
@@ -501,11 +501,15 @@
       if (totalDuration <= 0) { showModalError("⚠️ Please specify duration (Hours or Minutes)"); return; }
       const scheduledTime = new Date(`${date} ${time}`);
       if (scheduledTime < new Date()) { showModalError("⚠️ You cannot schedule a live class in the past!"); return; }
+      
+      // Clean YouTube ID before storing (so we only store the pure ID)
+      const cleanId = extractYouTubeId(youtubeInput);
+      
       try {
         await fetch('/api/live', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, category, date, time, duration: totalDuration, youtubeId }),
+          body: JSON.stringify({ title, category, date, time, duration: totalDuration, youtubeId: cleanId }),
           credentials: 'include'
         });
         hideAddModal();
@@ -813,10 +817,34 @@
     speedDropdown.addEventListener('change', changeSpeed);
     qualityDropdown.addEventListener('change', changeQuality);
 
+    // ========== YOUTUBE ID EXTRACTION ==========
+    function extractYouTubeId(input) {
+      if (!input) return '';
+      // Already a pure ID (exactly 11 alphanumeric characters)
+      if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+      // Shorts link
+      const shortsMatch = input.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
+      if (shortsMatch) return shortsMatch[1];
+      // Other common URL patterns
+      const patterns = [
+        /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+        /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/
+      ];
+      for (const p of patterns) {
+        const match = input.match(p);
+        if (match) return match[1];
+      }
+      // If nothing matched, return empty (invalid input)
+      return '';
+    }
+
     // Main function to play video (called from live cards)
-    function playVideo(videoId) {
+    function playVideo(rawInput) {
+      const videoId = extractYouTubeId(rawInput);
       if (!videoId) {
-        showToast("No YouTube video ID available for this session.", "error");
+        showToast("No valid YouTube video ID found. Please check the link.", "error");
         return;
       }
       closeVideoModal();
@@ -839,4 +867,4 @@
     };
   </script>
 </body>
-</html>
+  </html>
