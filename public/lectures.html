@@ -284,6 +284,7 @@
   </div>
   <div class="flex items-center gap-4">
     <button id="installBtn" class="hidden flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-download"></i> Install as App</button>
+    <!--<button id="admin-login-btn" onclick="showLoginModal()" class="hidden flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-lock"></i> Admin Login</button>-->
     <button id="manage-btn" onclick="showManageModal()" class="hidden flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium"><i class="fa-solid fa-plus"></i> Manage</button>
     <button onclick="logout()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
   </div>
@@ -387,10 +388,25 @@
   </div>
 </div>
 
-<!-- Advanced Video Player Modal -->
+<!-- Admin Login Modal -->
+<!--<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
+  <div class="bg-white rounded-3xl p-8 w-full max-w-sm mx-4">
+    <h3 class="text-xl font-semibold mb-4">Admin Login</h3>
+    <p class="text-gray-600 mb-6">Use your admin account</p>
+    <input type="email" id="adminEmail" placeholder="Admin Email" value="your_email" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-3">
+    <input type="password" id="adminPass" placeholder="Password" value="your_password" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-6">
+    <div class="flex gap-3">
+      <button onclick="hideLoginModal()" class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium">Cancel</button>
+      <button onclick="adminLogin()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Login as Admin</button>
+    </div>
+  </div>
+</div>-->
+
+<!-- Advanced Video Player Modal - with fresh iframe recreation -->
 <div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
   <div class="player-card w-full max-w-5xl">
     <div class="video-stage relative" id="videoStageContainer">
+      <!-- iframe will be dynamically created here -->
       <div id="videoOverlay" class="absolute inset-0 z-20 cursor-pointer"></div>
       <div id="centerPlayIcon" class="center-play-icon"><i class="fas fa-play"></i></div>
       <div id="messagePanel" class="absolute inset-0 bg-black/80 backdrop-blur-xl z-40 flex items-center justify-center flex-col gap-4 text-white hidden">
@@ -476,6 +492,31 @@ let allLectures = [];
 let currentPdfLink = '';
 let currentDppLink = '';
 
+// async function checkAuth() {
+//   try {
+//     const res = await fetch('/api/me', { credentials: 'include' });
+//     if (!res.ok) throw new Error();
+//     const data = await res.json();
+//     if (data.success) {
+//       if (data.user.role === 'admin') {
+//         document.getElementById('manage-btn').classList.remove('hidden');
+//         document.getElementById('admin-login-btn').classList.add('hidden');
+//         isAdmin = true;
+//       } else {
+//         // Student logged in - show admin login button
+//         document.getElementById('admin-login-btn').classList.remove('hidden');
+//       }
+//     } else {
+//       // Not logged in - show admin login button
+//       document.getElementById('admin-login-btn').classList.remove('hidden');
+//     }
+//   } catch (err) {
+//     // Not logged in - show admin login button
+//     document.getElementById('admin-login-btn').classList.remove('hidden');
+//   }
+// }
+
+//adding this function in place of above function to remove the login admin button on the lecture page
 async function checkAuth() {
   try {
     const res = await fetch('/api/me', { credentials: 'include' });
@@ -486,9 +527,14 @@ async function checkAuth() {
         document.getElementById('manage-btn').classList.remove('hidden');
         isAdmin = true;
       }
+      // students: manage button stays hidden, no admin-login button
     }
   } catch (err) { /* not logged in – nothing to show */ }
 }
+
+// function showLoginModal() {
+//   document.getElementById('loginModal').classList.remove('hidden');
+// }
 
 async function logout() {
   if (!confirm("Are you sure you want to logout?")) return;
@@ -538,6 +584,7 @@ function renderLectures(lectures) {
   lectures.forEach(lec => {
     const imageUrl = lec.imageUrl || "https://via.placeholder.com/80x80/1f2937/ffffff?text=Instructor";
     const isCompleted = lec.completed === true;
+    // Store lecture data for the modal
     const lectureId = lec._id;
     const pdfLink = lec.pdfLink || '';
     const hasDpp = lec.hasDpp === true;
@@ -560,10 +607,12 @@ function renderLectures(lectures) {
 }
 let currentLectureId = '';
 let currentHasDpp = false;
+// currentPdfLink already declared earlier – do NOT redeclare
 function showNotesModal(lectureId, pdfLink, hasDpp) {
   currentLectureId = lectureId;
   currentPdfLink = pdfLink;
   currentHasDpp = hasDpp;
+  // Always show modal – buttons will decide what to do
   document.getElementById('notes-modal').classList.remove('hidden');
 }
 
@@ -616,7 +665,7 @@ function selectChapter(chapterId) {
   if (window.innerWidth < 768) toggleSidebar();
 }
 
-// ========== ADVANCED VIDEO PLAYER - FULLSCREEN FIX ==========
+// ========== ADVANCED VIDEO PLAYER - FIXED FOR MULTIPLE VIDEOS ==========
 let player = null;
 let playerReady = false;
 let currentVideoId = null;
@@ -684,6 +733,7 @@ function bindControlEvents() {
   }
 }
 
+// Completely destroy and remove the iframe
 function destroyPlayer() {
   if (progressInterval) {
     clearInterval(progressInterval);
@@ -697,6 +747,7 @@ function destroyPlayer() {
     player = null;
   }
   playerReady = false;
+  // Remove existing iframe
   const existingIframe = document.getElementById('youtubeIframe');
   if (existingIframe) {
     existingIframe.remove();
@@ -704,6 +755,7 @@ function destroyPlayer() {
   isCreatingPlayer = false;
 }
 
+// Create a fresh iframe element
 function createFreshIframe() {
   const iframe = document.createElement('iframe');
   iframe.id = 'youtubeIframe';
@@ -725,13 +777,31 @@ function loadYouTubeAPI() {
 }
 
 function createPlayer(videoId) {
-  if (isCreatingPlayer) return;
+  if (isCreatingPlayer) {
+    console.log('Already creating player, skipping');
+    return;
+  }
   isCreatingPlayer = true;
-  destroyPlayer();
+  destroyPlayer(); // clean up old player and iframe
+  
+  // Create and append new iframe
   const newIframe = createFreshIframe();
   videoStageContainer.insertBefore(newIframe, videoStageContainer.firstChild);
-  const params = { controls: 0, disablekb: 1, modestbranding: 1, rel: 0, showinfo: 0, iv_load_policy: 3, fs: 0, playsinline: 1, enablejsapi: 1, origin: window.location.origin };
+  
+  const params = {
+    controls: 0,
+    disablekb: 1,
+    modestbranding: 1,
+    rel: 0,
+    showinfo: 0,
+    iv_load_policy: 3,
+    fs: 0,
+    playsinline: 1,
+    enablejsapi: 1,
+    origin: window.location.origin
+  };
   newIframe.src = `https://www.youtube.com/embed/${videoId}?${new URLSearchParams(params).toString()}`;
+  
   player = new YT.Player('youtubeIframe', {
     events: {
       onReady: onPlayerReady,
@@ -760,6 +830,7 @@ function onPlayerStateChange(e) {
   const state = e.data;
   const isPlaying = (state === YT.PlayerState.PLAYING);
   playPauseBtn.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+  
   if (isPlaying) {
     centerIconDiv.style.opacity = '0';
   } else if (state === YT.PlayerState.PAUSED) {
@@ -776,6 +847,7 @@ function onPlayerStateChange(e) {
 }
 
 function onPlayerError(error) {
+  console.error('YouTube error:', error);
   errorTextSpan.innerText = '⚠️ Failed to load video. Invalid ID or restricted content.';
   messagePanel.classList.remove('hidden');
   playerReady = false;
@@ -871,8 +943,23 @@ function updateVolumeIcon(vol) {
   else volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
 }
 
-function changeSpeed() { if (player && playerReady) { currentPlaybackRate = parseFloat(speedDropdown.value); player.setPlaybackRate(currentPlaybackRate); showControls(); } }
-function changeQuality() { if (player && playerReady) { const quality = qualityDropdown.value; if (quality === 'auto') player.setPlaybackQuality('auto'); else player.setPlaybackQuality(quality); showControls(); } }
+function changeSpeed() {
+  const newSpeed = parseFloat(speedDropdown.value);
+  if (!player || !playerReady) return;
+  currentPlaybackRate = newSpeed;
+  player.setPlaybackRate(newSpeed);
+  showControls();
+}
+speedDropdown.addEventListener('change', changeSpeed);
+
+function changeQuality() {
+  const quality = qualityDropdown.value;
+  if (!player || !playerReady) return;
+  if (quality === 'auto') player.setPlaybackQuality('auto');
+  else player.setPlaybackQuality(quality);
+  showControls();
+}
+qualityDropdown.addEventListener('change', changeQuality);
 
 function toggleFullscreen() {
   const container = document.querySelector('#videoPlayerModal .player-card');
@@ -885,11 +972,14 @@ function toggleFullscreen() {
 }
 
 function closeVideoModal() {
-  if (document.fullscreenElement) document.exitFullscreen();
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  }
   destroyPlayer();
   modal.classList.add('hidden');
   if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
   document.body.style.overflow = '';
+  // Remove any leftover iframe from the container
   const leftoverIframe = document.getElementById('youtubeIframe');
   if (leftoverIframe) leftoverIframe.remove();
 }
@@ -900,34 +990,61 @@ function handleVideoKeys(e) {
   const tag = e.target.tagName;
   if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT') return;
   switch(e.key) {
-    case ' ': case 'Space': e.preventDefault(); (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo(); showControls(); break;
-    case 'ArrowLeft': e.preventDefault(); player.seekTo(Math.max(0, player.getCurrentTime() - 5), true); updateTimeDisplay(); showControls(); break;
-    case 'ArrowRight': e.preventDefault(); player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 5), true); updateTimeDisplay(); showControls(); break;
-    case 'ArrowUp': e.preventDefault(); setVolume(currentVolume + 5); break;
-    case 'ArrowDown': e.preventDefault(); setVolume(currentVolume - 5); break;
-    case 'f': case 'F': e.preventDefault(); toggleFullscreen(); break;
+    case ' ': case 'Space':
+      e.preventDefault();
+      (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+      showControls();
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      player.seekTo(Math.max(0, player.getCurrentTime() - 5), true);
+      updateTimeDisplay();
+      showControls();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 5), true);
+      updateTimeDisplay();
+      showControls();
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      setVolume(currentVolume + 5);
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      setVolume(currentVolume - 5);
+      break;
+    case 'f': case 'F':
+      e.preventDefault();
+      toggleFullscreen();
+      break;
   }
 }
 
-playPauseBtn.addEventListener('click', () => { if (player && playerReady) { (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo(); showControls(); } });
+// Event listeners
+playPauseBtn.addEventListener('click', () => {
+  if (player && playerReady) {
+    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+    showControls();
+  }
+});
 progressBarBg.addEventListener('click', seekToPosition);
 progressBarBg.addEventListener('mousedown', handleProgressDragStart);
 volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
 volumeBtn.addEventListener('click', toggleMute);
 fullscreenBtn.addEventListener('click', toggleFullscreen);
-overlayVideo.addEventListener('click', () => { if (player && playerReady) { (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo(); showControls(); } });
+overlayVideo.addEventListener('click', () => {
+  if (player && playerReady) {
+    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+    showControls();
+  }
+});
 overlayVideo.addEventListener('dblclick', toggleFullscreen);
 closeModalBtn.addEventListener('click', closeVideoModal);
 document.addEventListener('keydown', handleVideoKeys);
-
-// FULLSCREEN CHANGE EVENT: FIXED - ensures controls become visible when entering/exiting fullscreen
 window.addEventListener('fullscreenchange', () => {
   fullscreenBtn.innerHTML = document.fullscreenElement ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
-  // Force controls to be visible and reset hide timer in both enter and exit fullscreen
-  if (customControls) {
-    customControls.classList.remove('hide-controls');
-    resetControlsHideTimer();
-  }
   if (!document.fullscreenElement) {
     document.body.style.overflow = '';
     document.body.offsetHeight;
@@ -939,7 +1056,9 @@ function playVideo(videoId) {
     showToast("No YouTube video ID added yet.", "error");
     return;
   }
+  // Always close existing modal completely and recreate everything
   closeVideoModal();
+  // Small delay to ensure DOM cleanup
   setTimeout(() => {
     currentVideoId = videoId;
     modal.classList.remove('hidden');
@@ -967,17 +1086,29 @@ function updateManageUI() {
   if(manageMode === 4) populateDeleteLectureChapterSelect();
   if(manageMode === 5) populateUpdateChapterSelect();
 }
-async function populateLectureChapterSelect() { /* unchanged - keep original code */ 
+async function populateLectureChapterSelect() {
   const select = document.getElementById('lecture-chapter-select');
   select.innerHTML = '<option value="">Loading chapters...</option>';
   try {
     const res = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
     const chapters = await res.json();
     select.innerHTML = '<option value="">Select Chapter</option>';
-    if (chapters.length === 0) select.innerHTML = '<option value="">No chapters found - create one first</option>';
-    else chapters.forEach(ch => { const opt = document.createElement('option'); opt.value = ch._id; opt.textContent = ch.title; select.appendChild(opt); });
-  } catch(e) { select.innerHTML = '<option value="">Error loading chapters</option>'; }
+    if (chapters.length === 0) {
+      select.innerHTML = '<option value="">No chapters found - create one first</option>';
+    } else {
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch._id;
+        opt.textContent = ch.title;
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    select.innerHTML = '<option value="">Error loading chapters</option>';
+    console.error('Error loading chapters:', e);
+  }
 }
+
 async function populateDeleteChapterSelect() {
   const select = document.getElementById('delete-chapter-select');
   select.innerHTML = '<option value="">Loading chapters...</option>';
@@ -985,10 +1116,22 @@ async function populateDeleteChapterSelect() {
     const res = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
     const chapters = await res.json();
     select.innerHTML = '<option value="">Select Chapter to Delete</option>';
-    if (chapters.length === 0) select.innerHTML = '<option value="">No chapters to delete</option>';
-    else chapters.forEach(ch => { const opt = document.createElement('option'); opt.value = ch._id; opt.textContent = ch.title; select.appendChild(opt); });
-  } catch(e) { select.innerHTML = '<option value="">Error loading chapters</option>'; }
+    if (chapters.length === 0) {
+      select.innerHTML = '<option value="">No chapters to delete</option>';
+    } else {
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch._id;
+        opt.textContent = ch.title;
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    select.innerHTML = '<option value="">Error loading chapters</option>';
+    console.error('Error loading chapters:', e);
+  }
 }
+
 async function populateDeleteLectureChapterSelect() {
   const select = document.getElementById('delete-lecture-chapter');
   select.innerHTML = '<option value="">Loading chapters...</option>';
@@ -996,10 +1139,22 @@ async function populateDeleteLectureChapterSelect() {
     const res = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
     const chapters = await res.json();
     select.innerHTML = '<option value="">Select Chapter</option>';
-    if (chapters.length === 0) select.innerHTML = '<option value="">No chapters found</option>';
-    else chapters.forEach(ch => { const opt = document.createElement('option'); opt.value = ch._id; opt.textContent = ch.title; select.appendChild(opt); });
-  } catch(e) { select.innerHTML = '<option value="">Error loading chapters</option>'; }
+    if (chapters.length === 0) {
+      select.innerHTML = '<option value="">No chapters found</option>';
+    } else {
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch._id;
+        opt.textContent = ch.title;
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    select.innerHTML = '<option value="">Error loading chapters</option>';
+    console.error('Error loading chapters:', e);
+  }
 }
+
 async function populateUpdateChapterSelect() {
   const select = document.getElementById('update-lecture-chapter');
   select.innerHTML = '<option value="">Loading chapters...</option>';
@@ -1007,16 +1162,29 @@ async function populateUpdateChapterSelect() {
     const res = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
     const chapters = await res.json();
     select.innerHTML = '<option value="">Select Chapter</option>';
-    if (chapters.length === 0) select.innerHTML = '<option value="">No chapters found</option>';
-    else chapters.forEach(ch => { const opt = document.createElement('option'); opt.value = ch._id; opt.textContent = ch.title; select.appendChild(opt); });
-  } catch(e) { select.innerHTML = '<option value="">Error loading chapters</option>'; }
+    if (chapters.length === 0) {
+      select.innerHTML = '<option value="">No chapters found</option>';
+    } else {
+      chapters.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch._id;
+        opt.textContent = ch.title;
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    select.innerHTML = '<option value="">Error loading chapters</option>';
+    console.error('Error loading chapters:', e);
+  }
 }
+
 async function updateDeleteLectureOptions() {
   const chapterId = document.getElementById('delete-lecture-chapter').value;
   const select = document.getElementById('delete-lecture-select'); select.innerHTML = '<option value="">Select Lecture to Delete</option>';
   if(!chapterId) return;
   try { const res = await fetch(`/api/lectures?chapterId=${chapterId}`, { credentials: 'include' }); const lectures = await res.json(); lectures.forEach(lec => { const opt = document.createElement('option'); opt.value = lec._id; opt.textContent = lec.title; select.appendChild(opt); }); } catch(e) {}
 }
+
 async function populateUpdateLectureSelect() {
   const chapterId = document.getElementById('update-lecture-chapter').value;
   const select = document.getElementById('update-lecture-select'); select.innerHTML = '<option value="">Select Lecture to Update</option>';
@@ -1028,67 +1196,255 @@ async function loadLectureForUpdate() {
   if(!lectureId) return;
   try { const res = await fetch(`/api/lectures/${lectureId}`, { credentials: 'include' }); if(!res.ok) throw new Error(); const lec = await res.json(); document.getElementById('update-title').value = lec.title || ''; document.getElementById('update-youtube').value = lec.youtubeId || ''; document.getElementById('update-image').value = lec.imageUrl || ''; document.getElementById('update-pdf').value = lec.pdfLink || ''; document.getElementById('update-dpp').value = lec.dppLink || ''; } catch(e) { showToast("Could not load lecture details.", "error"); }
 }
+// async function adminLogin() {
+//   const email = document.getElementById('adminEmail').value.trim();
+//   const password = document.getElementById('adminPass').value.trim();
+//   if(!email || !password) {
+//     showToast("Please enter email and password", "error");
+//     return;
+//   }
+//
+//   const loginBtn = document.querySelector('#loginModal .bg-blue-600');
+//   const originalText = loginBtn.textContent;
+//   loginBtn.textContent = 'Logging in...';
+//   loginBtn.disabled = true;
+//
+//   try {
+//     const res = await fetch('/api/login', {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({ email, password }),
+//       credentials: 'include'
+//     });
+//     const data = await res.json();
+//     if(data.success && data.user.role === 'admin') {
+//       hideLoginModal();
+//       isAdmin = true;
+//       document.getElementById('manage-btn').classList.remove('hidden');
+//       document.getElementById('admin-login-btn').classList.add('hidden');
+//       showToast("✅ Admin logged in successfully!", "success");
+//       // Clear password field
+//       document.getElementById('adminPass').value = '';
+//     } else {
+//       showToast(data.msg || 'Invalid admin credentials', "error");
+//     }
+//   } catch(e) {
+//     showToast("Cannot connect to server", "error");
+//   } finally {
+//     loginBtn.textContent = originalText;
+//     loginBtn.disabled = false;
+//   }
+// }
+// function hideLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
 async function executeManageAction() {
-  if (!isAdmin) { showToast("Please login as Admin first", "error"); hideManageModal(); return; }
+  if (!isAdmin) { 
+    showToast("Please login as Admin first", "error"); 
+    hideManageModal(); 
+    return; 
+  }
+  
   const confirmBtn = document.querySelector('#manage-modal .bg-blue-600');
   const originalText = confirmBtn.textContent;
   confirmBtn.textContent = 'Processing...';
   confirmBtn.disabled = true;
+  
   try {
     if (manageMode === 1) {
       const title = document.getElementById('chapter-title').value.trim();
-      if (!title) { showToast("Chapter title is required", "error"); return; }
-      const res = await fetch('/api/chapters', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subjectId, title, order: Date.now() }), credentials: 'include' });
+      if (!title) { 
+        showToast("Chapter title is required", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      const res = await fetch('/api/chapters', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ subjectId, title, order: Date.now() }), 
+        credentials: 'include' 
+      });
       const data = await res.json();
-      if (res.ok) { showToast("Chapter added successfully!", "success"); document.getElementById('chapter-title').value = ''; await loadData(); } else showToast(data.msg || "Failed to add chapter", "error");
-    } else if (manageMode === 2) {
+      if (res.ok) {
+        showToast("Chapter added successfully!", "success");
+        document.getElementById('chapter-title').value = '';
+        await loadData(); // Refresh the page data
+      } else {
+        showToast(data.msg || "Failed to add chapter", "error");
+      }
+    }
+    else if (manageMode === 2) {
       const title = document.getElementById('lecture-title').value.trim();
       const chapterId = document.getElementById('lecture-chapter-select').value;
-      if (!title || !chapterId) { showToast("Title and Chapter are required", "error"); return; }
-      const res = await fetch('/api/lectures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subjectId, chapterId, title, date: document.getElementById('lecture-date').value || new Date().toLocaleDateString('en-GB'), duration: document.getElementById('lecture-duration').value || "45m", youtubeId: document.getElementById('lecture-youtube').value.trim(), imageUrl: document.getElementById('lecture-image').value.trim(), pdfLink: document.getElementById('lecture-pdf').value.trim(), dppLink: document.getElementById('lecture-dpp').value.trim() }), credentials: 'include' });
+      if (!title || !chapterId) { 
+        showToast("Title and Chapter are required", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      const res = await fetch('/api/lectures', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          subjectId, chapterId, title, 
+          date: document.getElementById('lecture-date').value || new Date().toLocaleDateString('en-GB'), 
+          duration: document.getElementById('lecture-duration').value || "45m", 
+          youtubeId: document.getElementById('lecture-youtube').value.trim(), 
+          imageUrl: document.getElementById('lecture-image').value.trim(), 
+          pdfLink: document.getElementById('lecture-pdf').value.trim(), 
+          dppLink: document.getElementById('lecture-dpp').value.trim() 
+        }), 
+        credentials: 'include' 
+      });
       const data = await res.json();
-      if (res.ok) { showToast("Lecture added successfully!", "success"); document.getElementById('lecture-title').value = ''; document.getElementById('lecture-youtube').value = ''; document.getElementById('lecture-image').value = ''; document.getElementById('lecture-pdf').value = ''; document.getElementById('lecture-dpp').value = ''; await loadData(); } else showToast(data.msg || "Failed to add lecture", "error");
-    } else if (manageMode === 3) {
-      const chapterId = document.getElementById('delete-chapter-select').value;
-      if (!chapterId) { showToast("Select a chapter to delete", "error"); return; }
-      if (!confirm("Delete this chapter and all its lectures?")) return;
-      const res = await fetch(`/api/chapters/${chapterId}`, { method: 'DELETE', credentials: 'include' });
-      if (res.ok) { showToast("Chapter deleted successfully!", "success"); const chaptersRes = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' }); const chapters = await chaptersRes.json(); currentChapterId = chapters.length > 0 ? chapters[0]._id : null; await loadData(); } else showToast("Failed to delete chapter", "error");
-    } else if (manageMode === 4) {
-      const lectureId = document.getElementById('delete-lecture-select').value;
-      if (!lectureId) { showToast("Select a lecture to delete", "error"); return; }
-      if (!confirm("Delete this lecture?")) return;
-      const res = await fetch(`/api/lectures/${lectureId}`, { method: 'DELETE', credentials: 'include' });
-      if (res.ok) { showToast("Lecture deleted successfully!", "success"); await loadData(); } else showToast("Failed to delete lecture", "error");
-    } else if (manageMode === 5) {
-      const lectureId = document.getElementById('update-lecture-select').value;
-      if (!lectureId) { showToast("Select a lecture to update", "error"); return; }
-      const updateData = {};
-      if (document.getElementById('update-title').value.trim()) updateData.title = document.getElementById('update-title').value.trim();
-      if (document.getElementById('update-youtube').value.trim()) updateData.youtubeId = document.getElementById('update-youtube').value.trim();
-      if (document.getElementById('update-image').value.trim()) updateData.imageUrl = document.getElementById('update-image').value.trim();
-      if (document.getElementById('update-pdf').value.trim()) updateData.pdfLink = document.getElementById('update-pdf').value.trim();
-      if (document.getElementById('update-dpp').value.trim()) updateData.dppLink = document.getElementById('update-dpp').value.trim();
-      const res = await fetch(`/api/lectures/${lectureId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData), credentials: 'include' });
-      const data = await res.json();
-      if (res.ok) { showToast("Lecture updated successfully!", "success"); document.getElementById('update-title').value = ''; document.getElementById('update-youtube').value = ''; document.getElementById('update-image').value = ''; document.getElementById('update-pdf').value = ''; document.getElementById('update-dpp').value = ''; await loadData(); } else showToast(data.msg || "Failed to update lecture", "error");
-    } else if (manageMode === 6) {
-      const jsonText = document.getElementById('bulk-json').value.trim();
-      if (!jsonText) { showToast("Please paste JSON", "error"); return; }
-      let payload;
-      try { payload = JSON.parse(jsonText); } catch (e) { showToast("Invalid JSON format", "error"); return; }
-      payload.subjectId = subjectId;
-      const res = await fetch('/api/lectures/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), credentials: 'include' });
-      const data = await res.json();
-      if (res.ok) { showToast(`✅ ${data.createdLectures} lectures added!`, "success"); document.getElementById('bulk-json').value = ''; await loadData(); } else showToast(data.error || "Failed to add lectures", "error");
+      if (res.ok) {
+        showToast("Lecture added successfully!", "success");
+        document.getElementById('lecture-title').value = '';
+        document.getElementById('lecture-youtube').value = '';
+        document.getElementById('lecture-image').value = '';
+        document.getElementById('lecture-pdf').value = '';
+        document.getElementById('lecture-dpp').value = '';
+        await loadData();
+      } else {
+        showToast(data.msg || "Failed to add lecture", "error");
+      }
     }
+    else if (manageMode === 3) {
+      const chapterId = document.getElementById('delete-chapter-select').value;
+      if (!chapterId) { 
+        showToast("Select a chapter to delete", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      if (!confirm("Delete this chapter and all its lectures?")) {
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return;
+      }
+      const res = await fetch(`/api/chapters/${chapterId}`, { method: 'DELETE', credentials: 'include' });
+      if (res.ok) {
+        showToast("Chapter deleted successfully!", "success");
+        // If we deleted the current chapter, select the first available
+        const chaptersRes = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
+        const chapters = await chaptersRes.json();
+        if (chapters.length > 0) {
+          currentChapterId = chapters[0]._id;
+        } else {
+          currentChapterId = null;
+        }
+        await loadData();
+      } else {
+        showToast("Failed to delete chapter", "error");
+      }
+    }
+    else if (manageMode === 4) {
+      const lectureId = document.getElementById('delete-lecture-select').value;
+      if (!lectureId) { 
+        showToast("Select a lecture to delete", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      if (!confirm("Delete this lecture?")) {
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return;
+      }
+      const res = await fetch(`/api/lectures/${lectureId}`, { method: 'DELETE', credentials: 'include' });
+      if (res.ok) {
+        showToast("Lecture deleted successfully!", "success");
+        await loadData();
+      } else {
+        showToast("Failed to delete lecture", "error");
+      }
+    }
+    else if (manageMode === 5) {
+      const lectureId = document.getElementById('update-lecture-select').value;
+      if (!lectureId) { 
+        showToast("Select a lecture to update", "error"); 
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+        return; 
+      }
+      const updateData = {};
+      const title = document.getElementById('update-title').value.trim();
+      const youtubeId = document.getElementById('update-youtube').value.trim();
+      const imageUrl = document.getElementById('update-image').value.trim();
+      const pdfLink = document.getElementById('update-pdf').value.trim();
+      const dppLink = document.getElementById('update-dpp').value.trim();
+      
+      if (title) updateData.title = title;
+      if (youtubeId) updateData.youtubeId = youtubeId;
+      if (imageUrl) updateData.imageUrl = imageUrl;
+      if (pdfLink) updateData.pdfLink = pdfLink;
+      if (dppLink) updateData.dppLink = dppLink;
+      
+      const res = await fetch(`/api/lectures/${lectureId}`, { 
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(updateData), 
+        credentials: 'include' 
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Lecture updated successfully!", "success");
+        document.getElementById('update-title').value = '';
+        document.getElementById('update-youtube').value = '';
+        document.getElementById('update-image').value = '';
+        document.getElementById('update-pdf').value = '';
+        document.getElementById('update-dpp').value = '';
+        await loadData();
+      } else {
+        showToast(data.msg || "Failed to update lecture", "error");
+      }
+    }
+    else if (manageMode === 6) {
+  const jsonText = document.getElementById('bulk-json').value.trim();
+  if (!jsonText) { showToast("Please paste JSON", "error"); return; }
+
+  let payload;
+  try { payload = JSON.parse(jsonText); }
+  catch (e) { showToast("Invalid JSON format", "error"); return; }
+
+  // subjectId is taken from the URL
+  payload.subjectId = subjectId;
+
+  const res = await fetch('/api/lectures/bulk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (res.ok) {
+    showToast(`✅ ${data.createdLectures} lectures added!`, "success");
+    document.getElementById('bulk-json').value = '';
+    await loadData();
+  } else {
+    showToast(data.error || "Failed to add lectures", "error");
+  }
+}
+    // Refresh all dropdowns in the modal
     if (manageMode === 2) await populateLectureChapterSelect();
     if (manageMode === 3) await populateDeleteChapterSelect();
-    if (manageMode === 4) { await populateDeleteLectureChapterSelect(); document.getElementById('delete-lecture-select').innerHTML = '<option value="">Select Chapter first</option>'; }
-    if (manageMode === 5) { await populateUpdateChapterSelect(); document.getElementById('update-lecture-select').innerHTML = '<option value="">Select Chapter first</option>'; }
-  } catch (err) { console.error(err); showToast("Action failed. Check console.", "error"); } finally { confirmBtn.textContent = originalText; confirmBtn.disabled = false; }
+    if (manageMode === 4) {
+      await populateDeleteLectureChapterSelect();
+      document.getElementById('delete-lecture-select').innerHTML = '<option value="">Select Chapter first</option>';
+    }
+    if (manageMode === 5) {
+      await populateUpdateChapterSelect();
+      document.getElementById('update-lecture-select').innerHTML = '<option value="">Select Chapter first</option>';
+    }
+    
+  } catch (err) { 
+    console.error(err); 
+    showToast("Action failed. Check console.", "error"); 
+  } finally {
+    confirmBtn.textContent = originalText;
+    confirmBtn.disabled = false;
+  }
 }
 window.onload = async () => { await checkAuth(); await loadData(); };
 </script>
 </body>
-  </html>
+</html>
