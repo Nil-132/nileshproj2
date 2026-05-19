@@ -147,6 +147,29 @@
       background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(12px);
     }
+
+    /* ===== FULLSCREEN FIXES ===== */
+.player-card:fullscreen,
+.player-card:-webkit-full-screen {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.player-card:fullscreen .video-stage,
+.player-card:-webkit-full-screen .video-stage {
+  flex: 1 1 auto;
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+.player-card:fullscreen .custom-controls,
+.player-card:-webkit-full-screen .custom-controls {
+  flex-shrink: 0;
+}
     .ctrl-btn {
       background: transparent;
       border: none;
