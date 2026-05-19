@@ -8,7 +8,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    /* All existing styles (unchanged - keep your current CSS) */
     body { font-family: system-ui, -apple-system, sans-serif; }
     .chapter-item:hover { background-color: #f8fafc; }
     .active-chapter {
@@ -124,111 +123,73 @@
       z-index: 25;
       opacity: 0;
     }
+
+    /* ---------- FULLSCREEN & CONTROLS OVERLAY ---------- */
+    .player-card:fullscreen,
+    .player-card:-webkit-full-screen {
+      position: relative;
+      width: 100vw !important;
+      max-width: 100vw !important;
+      height: 100vh !important;
+      border-radius: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      background: #000;
+    }
+    .player-card:fullscreen .video-stage,
+    .player-card:-webkit-full-screen .video-stage {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      aspect-ratio: unset;
+      flex: unset;
+      min-height: unset;
+    }
+
     .custom-controls {
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(12px);
-      padding: 14px 20px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+      padding: 20px 24px 24px 24px;
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       gap: 16px;
-      border-top: 1px solid rgba(255,255,255,0.2);
-      transition: opacity 0.3s ease, visibility 0.3s ease;
+      border-top: none;
+      backdrop-filter: none;
+      transition: opacity 0.3s, visibility 0.3s;
+      z-index: 30;
+      pointer-events: auto;
       opacity: 1;
       visibility: visible;
-      min-height: 70px;
     }
     .custom-controls.hide-controls {
       opacity: 0;
       visibility: hidden;
+      pointer-events: none;
     }
-    .player-card:fullscreen .custom-controls {
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(12px);
-    }
-	
-	/* ===== FULLSCREEN OVERLAY LAYOUT (YouTube‑like) ===== */
-.player-card:fullscreen,
-.player-card:-webkit-full-screen {
-  position: relative;          /* needed for absolute children */
-  width: 100vw !important;
-  max-width: 100vw !important;
-  height: 100vh !important;
-  border-radius: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-  background: #000;           /* fallback for video */
-}
-
-.player-card:fullscreen .video-stage,
-.player-card:-webkit-full-screen .video-stage {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  aspect-ratio: unset;        /* let it stretch naturally */
-  flex: unset;
-  min-height: unset;
-}
-
-.player-card:fullscreen .custom-controls,
-.player-card:-webkit-full-screen .custom-controls {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
-  backdrop-filter: none;
-  border-top: none;
-  padding: 24px 28px 28px 28px;   /* more spacious */
-  gap: 24px;
-  min-height: unset;
-  flex-wrap: nowrap;
-  align-items: center;
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 0.3s, visibility 0.3s;
-}
-
-/* Make the progress bar a bit taller in fullscreen */
-.player-card:fullscreen .progress-bar-bg,
-.player-card:-webkit-full-screen .progress-bar-bg {
-  height: 10px;
-}
-
-/* Keep hide‑controls working */
-.player-card:fullscreen .custom-controls.hide-controls,
-.player-card:-webkit-full-screen .custom-controls.hide-controls {
-  opacity: 0;
-  visibility: hidden;
-}
-
-/* Larger touch targets in fullscreen (optional) */
-.player-card:fullscreen .ctrl-btn,
-.player-card:-webkit-full-screen .ctrl-btn {
-  width: 52px;
-  height: 52px;
-  font-size: 1.4rem;
-}
-.player-card:fullscreen .skip-btn,
-.player-card:-webkit-full-screen .skip-btn {
-  font-size: 1.1rem;
-}
 
     .ctrl-btn {
       background: transparent;
       border: none;
       color: #f0f0f0;
-      width: 44px;
-      height: 44px;
-      border-radius: 40px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s;
       font-size: 1.3rem;
+      flex-shrink: 0;
     }
     .ctrl-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
     .ctrl-btn:active { transform: scale(0.96); }
+
+    .skip-btn { font-size: 1rem; font-weight: 600; }
+
     .progress-bar-bg {
       flex: 1;
       height: 8px;
@@ -236,6 +197,7 @@
       border-radius: 8px;
       cursor: pointer;
       transition: height 0.1s;
+      min-width: 50px;
     }
     .progress-bar-bg:hover { height: 10px; background: rgba(255,255,255,0.5); }
     .progress-fill {
@@ -247,16 +209,15 @@
     }
     .time-display {
       font-family: monospace;
-      font-size: 1rem;
+      font-size: 0.95rem;
       background: rgba(0,0,0,0.6);
       padding: 6px 12px;
       border-radius: 24px;
-      letter-spacing: 0.5px;
       color: #fff;
-      font-weight: 500;
+      white-space: nowrap;
     }
     .volume-slider {
-      width: 90px;
+      width: 80px;
       height: 5px;
       -webkit-appearance: none;
       background: rgba(255,255,255,0.3);
@@ -266,11 +227,9 @@
     }
     .volume-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 16px; height: 16px;
       background: #ff6b81;
       border-radius: 50%;
-      cursor: pointer;
       box-shadow: 0 0 2px white;
     }
     .speed-dropdown, .quality-dropdown {
@@ -280,32 +239,49 @@
       padding: 8px 14px;
       border-radius: 32px;
       font-size: 0.9rem;
-      font-weight: 500;
       cursor: pointer;
-      outline: none;
       backdrop-filter: blur(4px);
+      flex-shrink: 0;
     }
-    .speed-dropdown option, .quality-dropdown option {
-      background: #1f2937;
-      color: white;
+    .speed-dropdown option, .quality-dropdown option { background: #1f2937; color: white; }
+
+    /* Speed indicator (long‑press) */
+    .speed-indicator {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.5rem;
+      padding: 12px 24px;
+      border-radius: 16px;
+      z-index: 40;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
     }
+    .speed-indicator.active { opacity: 1; }
+
     .loading-spinner {
-      width: 48px;
-      height: 48px;
+      width: 48px; height: 48px;
       border: 4px solid rgba(255,255,255,0.2);
       border-top: 4px solid #ff6b81;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
     @media (max-width: 640px) {
-      .ctrl-btn { width: 48px; height: 48px; font-size: 1.4rem; }
+      .ctrl-btn { width: 44px; height: 44px; font-size: 1.2rem; }
       .progress-bar-bg { height: 6px; }
-      .volume-slider { width: 70px; }
+      .volume-slider { width: 60px; }
       .speed-dropdown, .quality-dropdown { padding: 6px 10px; font-size: 0.8rem; }
-      .time-display { font-size: 0.8rem; padding: 4px 8px; }
-      .custom-controls { padding: 12px 12px; gap: 12px; min-height: 60px; }
+      .custom-controls { padding: 16px 16px; gap: 10px; }
+      .time-display { font-size: 0.8rem; }
     }
+
     .manage-form-container {
       border: none;
       padding: 1rem;
@@ -345,17 +321,16 @@
   <!-- Main Content -->
   <div class="flex-1 flex flex-col overflow-hidden">
     <div class="bg-white border-b px-4 md:px-8 py-5 flex justify-between items-center">
-  <div class="flex items-center gap-3">
-    <button onclick="toggleSidebar()" class="md:hidden text-3xl text-gray-700"><i class="fa-solid fa-bars"></i></button>
-    <h1 class="text-2xl font-semibold" id="subject-title">All Classes</h1>
-  </div>
-  <div class="flex items-center gap-4">
-    <button id="installBtn" class="hidden flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-download"></i> Install as App</button>
-    <!--<button id="admin-login-btn" onclick="showLoginModal()" class="hidden flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-lock"></i> Admin Login</button>-->
-    <button id="manage-btn" onclick="showManageModal()" class="hidden flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium"><i class="fa-solid fa-plus"></i> Manage</button>
-    <button onclick="logout()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-  </div>
-</div>
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar()" class="md:hidden text-3xl text-gray-700"><i class="fa-solid fa-bars"></i></button>
+        <h1 class="text-2xl font-semibold" id="subject-title">All Classes</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="installBtn" class="hidden flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-download"></i> Install as App</button>
+        <button id="manage-btn" onclick="showManageModal()" class="hidden flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium"><i class="fa-solid fa-plus"></i> Manage</button>
+        <button onclick="logout()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-2xl text-sm font-medium"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </div>
+    </div>
 
     <div class="bg-white border-b px-4 md:px-8 py-4 flex gap-4 items-center">
       <div class="relative flex-1">
@@ -428,26 +403,9 @@
       <input id="update-dpp" type="text" placeholder="DPP Link (Google Drive)" class="w-full border border-gray-300 rounded-2xl px-5 py-4">
     </div>
     <div id="form6" class="manage-form-container hidden space-y-4">
-  <p class="text-sm text-gray-500">Paste a JSON with chapters and their lectures.</p>
-  <textarea id="bulk-json" rows="12" class="w-full border border-gray-300 rounded-2xl px-5 py-4 font-mono text-sm" placeholder='{
-  "chapters": [
-    {
-      "title": "Chapter Name",
-      "lectures": [
-        {
-          "title": "Lecture Title",
-          "youtubeId": "abc123",
-          "date": "01/01/2024",
-          "duration": "45m",
-          "imageUrl": "https://…",
-          "pdfLink": "",
-          "dppLink": ""
-        }
-      ]
-    }
-  ]
-}'></textarea>
-</div>
+      <p class="text-sm text-gray-500">Paste a JSON with chapters and their lectures.</p>
+      <textarea id="bulk-json" rows="12" class="w-full border border-gray-300 rounded-2xl px-5 py-4 font-mono text-sm" placeholder='{"chapters":[{"title":"Chapter Name","lectures":[{"title":"Lecture Title","youtubeId":"abc123","date":"01/01/2024","duration":"45m","imageUrl":"https://…","pdfLink":"","dppLink":""}]}]}'></textarea>
+    </div>
     <div class="flex gap-4 mt-8">
       <button onclick="hideManageModal()" class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium">Cancel</button>
       <button onclick="executeManageAction()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Confirm Action</button>
@@ -455,48 +413,37 @@
   </div>
 </div>
 
-<!-- Admin Login Modal -->
-<!--<div id="loginModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-[100]">
-  <div class="bg-white rounded-3xl p-8 w-full max-w-sm mx-4">
-    <h3 class="text-xl font-semibold mb-4">Admin Login</h3>
-    <p class="text-gray-600 mb-6">Use your admin account</p>
-    <input type="email" id="adminEmail" placeholder="Admin Email" value="your_email" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-3">
-    <input type="password" id="adminPass" placeholder="Password" value="your_password" class="w-full border border-gray-300 rounded-2xl px-5 py-4 mb-6">
-    <div class="flex gap-3">
-      <button onclick="hideLoginModal()" class="flex-1 py-4 border border-gray-300 rounded-2xl font-medium">Cancel</button>
-      <button onclick="adminLogin()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-semibold">Login as Admin</button>
-    </div>
-  </div>
-</div>-->
-
-<!-- Advanced Video Player Modal - with fresh iframe recreation -->
+<!-- Advanced Video Player Modal -->
 <div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
   <div class="player-card w-full max-w-5xl">
     <div class="video-stage relative" id="videoStageContainer">
       <!-- iframe will be dynamically created here -->
-      <div id="videoOverlay" class="absolute inset-0 z-20 cursor-pointer"></div>
       <div id="centerPlayIcon" class="center-play-icon"><i class="fas fa-play"></i></div>
       <div id="messagePanel" class="absolute inset-0 bg-black/80 backdrop-blur-xl z-40 flex items-center justify-center flex-col gap-4 text-white hidden">
         <div class="loading-spinner"></div>
         <div id="errorText">Loading video ...</div>
       </div>
+      <!-- Speed indicator for long‑press -->
+      <div class="speed-indicator" id="speedIndicator">2×</div>
     </div>
+
+    <!-- Custom controls overlay -->
     <div class="custom-controls" id="customControls">
       <button class="ctrl-btn" id="playPauseBtn"><i class="fas fa-pause"></i></button>
-	  <!-- Skip buttons – placed right after the Play/Pause button -->
-<button class="ctrl-btn skip-btn" id="skipBackBtn" title="Back 10s">⏪</button>
-<button class="ctrl-btn skip-btn" id="skipForwardBtn" title="Forward 10s">⏩</button>
-      <div class="flex-1 flex items-center gap-3 min-w-[120px]">
+      <button class="ctrl-btn skip-btn" id="skipBackBtn" title="Back 10s">⏪</button>
+      <button class="ctrl-btn skip-btn" id="skipForwardBtn" title="Forward 10s">⏩</button>
+      <div class="flex-1 flex items-center gap-3 min-w-[80px]">
         <div class="progress-bar-bg" id="progressBarBg"><div class="progress-fill" id="progressFill"></div></div>
         <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
       </div>
       <div class="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full">
-        <button class="ctrl-btn w-8 h-8" id="volumeBtn"><i class="fas fa-volume-up"></i></button>
+        <button class="ctrl-btn" id="volumeBtn"><i class="fas fa-volume-up"></i></button>
         <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="70">
       </div>
       <select id="speedDropdown" class="speed-dropdown">
-        <option value="0.5">0.5x</option><option value="0.75">0.75x</option><option value="1" selected>1x</option>
-        <option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+        <option value="0.5">0.5x</option><option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option><option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option><option value="2">2x</option>
       </select>
       <select id="qualityDropdown" class="quality-dropdown">
         <option value="auto">Auto</option>
@@ -562,31 +509,6 @@ let allLectures = [];
 let currentPdfLink = '';
 let currentDppLink = '';
 
-// async function checkAuth() {
-//   try {
-//     const res = await fetch('/api/me', { credentials: 'include' });
-//     if (!res.ok) throw new Error();
-//     const data = await res.json();
-//     if (data.success) {
-//       if (data.user.role === 'admin') {
-//         document.getElementById('manage-btn').classList.remove('hidden');
-//         document.getElementById('admin-login-btn').classList.add('hidden');
-//         isAdmin = true;
-//       } else {
-//         // Student logged in - show admin login button
-//         document.getElementById('admin-login-btn').classList.remove('hidden');
-//       }
-//     } else {
-//       // Not logged in - show admin login button
-//       document.getElementById('admin-login-btn').classList.remove('hidden');
-//     }
-//   } catch (err) {
-//     // Not logged in - show admin login button
-//     document.getElementById('admin-login-btn').classList.remove('hidden');
-//   }
-// }
-
-//adding this function in place of above function to remove the login admin button on the lecture page
 async function checkAuth() {
   try {
     const res = await fetch('/api/me', { credentials: 'include' });
@@ -597,14 +519,9 @@ async function checkAuth() {
         document.getElementById('manage-btn').classList.remove('hidden');
         isAdmin = true;
       }
-      // students: manage button stays hidden, no admin-login button
     }
   } catch (err) { /* not logged in – nothing to show */ }
 }
-
-// function showLoginModal() {
-//   document.getElementById('loginModal').classList.remove('hidden');
-// }
 
 async function logout() {
   if (!confirm("Are you sure you want to logout?")) return;
@@ -654,7 +571,6 @@ function renderLectures(lectures) {
   lectures.forEach(lec => {
     const imageUrl = lec.imageUrl || "https://via.placeholder.com/80x80/1f2937/ffffff?text=Instructor";
     const isCompleted = lec.completed === true;
-    // Store lecture data for the modal
     const lectureId = lec._id;
     const pdfLink = lec.pdfLink || '';
     const hasDpp = lec.hasDpp === true;
@@ -677,19 +593,15 @@ function renderLectures(lectures) {
 }
 let currentLectureId = '';
 let currentHasDpp = false;
-// currentPdfLink already declared earlier – do NOT redeclare
 function showNotesModal(lectureId, pdfLink, hasDpp) {
   currentLectureId = lectureId;
   currentPdfLink = pdfLink;
   currentHasDpp = hasDpp;
-  // Always show modal – buttons will decide what to do
   document.getElementById('notes-modal').classList.remove('hidden');
 }
-
 function hideNotesModal() {
   document.getElementById('notes-modal').classList.add('hidden');
 }
-
 function openPdf() {
   if (currentPdfLink) {
     window.open(currentPdfLink, '_blank');
@@ -698,7 +610,6 @@ function openPdf() {
   }
   hideNotesModal();
 }
-
 function openDpp() {
   if (currentHasDpp) {
     window.location.href = `/dpp-viewer.html?lectureId=${currentLectureId}`;
@@ -735,7 +646,7 @@ function selectChapter(chapterId) {
   if (window.innerWidth < 768) toggleSidebar();
 }
 
-// ========== ADVANCED VIDEO PLAYER - FIXED FOR MULTIPLE VIDEOS ==========
+// ========== ADVANCED VIDEO PLAYER (YouTube‑like, distraction‑free) ==========
 let player = null;
 let playerReady = false;
 let currentVideoId = null;
@@ -749,7 +660,6 @@ let isCreatingPlayer = false;
 
 const modal = document.getElementById('videoPlayerModal');
 const videoStageContainer = document.getElementById('videoStageContainer');
-const overlayVideo = document.getElementById('videoOverlay');
 const playPauseBtn = document.getElementById('playPauseBtn');
 const progressBarBg = document.getElementById('progressBarBg');
 const progressFill = document.getElementById('progressFill');
@@ -764,7 +674,53 @@ const messagePanel = document.getElementById('messagePanel');
 const errorTextSpan = document.getElementById('errorText');
 const closeModalBtn = document.getElementById('closeVideoModal');
 const customControls = document.getElementById('customControls');
+const speedIndicator = document.getElementById('speedIndicator');
 
+// ---------- Long‑press (2× speed) ----------
+const longPressDuration = 300;
+let longPressTimer = null;
+let longPressActive = false;
+let speedBeforeLongPress = 1;
+
+function startLongPress(e) {
+  if (!player || !playerReady) return;
+  if (e.type === 'touchstart' && e.touches.length > 1) return;
+  if (e.target.closest('#customControls') || e.target.closest('button, select, input')) return;
+  clearLongPress();
+  longPressTimer = setTimeout(() => {
+    longPressActive = true;
+    speedBeforeLongPress = player.getPlaybackRate();
+    player.setPlaybackRate(2);
+    speedIndicator.classList.add('active');
+    speedDropdown.value = '2';
+  }, longPressDuration);
+}
+function cancelLongPress(e) {
+  clearLongPress();
+  if (longPressActive && player && playerReady) {
+    player.setPlaybackRate(speedBeforeLongPress);
+    speedDropdown.value = speedBeforeLongPress;
+    longPressActive = false;
+    speedIndicator.classList.remove('active');
+  }
+}
+function clearLongPress() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
+// Attach long‑press to the video stage (not just overlay)
+const videoStage = document.querySelector('#videoPlayerModal .video-stage');
+videoStage.addEventListener('mousedown', startLongPress);
+videoStage.addEventListener('touchstart', startLongPress, { passive: true });
+window.addEventListener('mouseup', cancelLongPress);
+window.addEventListener('touchend', cancelLongPress);
+window.addEventListener('touchcancel', cancelLongPress);
+videoStage.addEventListener('contextmenu', (e) => { if (longPressActive) e.preventDefault(); });
+
+// ---------- Controls auto‑hide ----------
 function resetControlsHideTimer() {
   if (customControls) {
     customControls.classList.remove('hide-controls');
@@ -785,16 +741,11 @@ function showControls() {
 function bindControlEvents() {
   const stage = document.querySelector('#videoPlayerModal .video-stage');
   if (stage) {
-    stage.removeEventListener('mousemove', showControls);
-    stage.removeEventListener('click', showControls);
-    stage.removeEventListener('touchstart', showControls);
     stage.addEventListener('mousemove', showControls);
     stage.addEventListener('click', showControls);
     stage.addEventListener('touchstart', showControls);
   }
   if (customControls) {
-    customControls.removeEventListener('mouseenter', null);
-    customControls.removeEventListener('mouseleave', null);
     customControls.addEventListener('mouseenter', () => {
       if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
       customControls.classList.remove('hide-controls');
@@ -803,7 +754,7 @@ function bindControlEvents() {
   }
 }
 
-// Completely destroy and remove the iframe
+// ---------- Player lifecycle ----------
 function destroyPlayer() {
   if (progressInterval) {
     clearInterval(progressInterval);
@@ -817,24 +768,18 @@ function destroyPlayer() {
     player = null;
   }
   playerReady = false;
-  // Remove existing iframe
   const existingIframe = document.getElementById('youtubeIframe');
-  if (existingIframe) {
-    existingIframe.remove();
-  }
+  if (existingIframe) existingIframe.remove();
   isCreatingPlayer = false;
 }
-
-// Create a fresh iframe element
 function createFreshIframe() {
   const iframe = document.createElement('iframe');
   iframe.id = 'youtubeIframe';
-  iframe.className = 'absolute inset-0 w-full h-full border-0 pointer-events-none';
+  iframe.className = 'absolute inset-0 w-full h-full border-0';
   iframe.allow = 'autoplay; fullscreen; encrypted-media';
   iframe.allowFullscreen = true;
   return iframe;
 }
-
 function loadYouTubeAPI() {
   if (window.YT && window.YT.Player) {
     createPlayer(currentVideoId);
@@ -845,19 +790,12 @@ function loadYouTubeAPI() {
   document.head.appendChild(tag);
   window.onYouTubeIframeAPIReady = () => createPlayer(currentVideoId);
 }
-
 function createPlayer(videoId) {
-  if (isCreatingPlayer) {
-    console.log('Already creating player, skipping');
-    return;
-  }
+  if (isCreatingPlayer) return;
   isCreatingPlayer = true;
-  destroyPlayer(); // clean up old player and iframe
-  
-  // Create and append new iframe
+  destroyPlayer();
   const newIframe = createFreshIframe();
   videoStageContainer.insertBefore(newIframe, videoStageContainer.firstChild);
-  
   const params = {
     controls: 0,
     disablekb: 1,
@@ -871,7 +809,6 @@ function createPlayer(videoId) {
     origin: window.location.origin
   };
   newIframe.src = `https://www.youtube.com/embed/${videoId}?${new URLSearchParams(params).toString()}`;
-  
   player = new YT.Player('youtubeIframe', {
     events: {
       onReady: onPlayerReady,
@@ -880,7 +817,6 @@ function createPlayer(videoId) {
     }
   });
 }
-
 function onPlayerReady(e) {
   playerReady = true;
   isCreatingPlayer = false;
@@ -895,12 +831,10 @@ function onPlayerReady(e) {
   bindControlEvents();
   resetControlsHideTimer();
 }
-
 function onPlayerStateChange(e) {
   const state = e.data;
   const isPlaying = (state === YT.PlayerState.PLAYING);
   playPauseBtn.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
-  
   if (isPlaying) {
     centerIconDiv.style.opacity = '0';
   } else if (state === YT.PlayerState.PAUSED) {
@@ -915,7 +849,6 @@ function onPlayerStateChange(e) {
   updateTimeDisplay();
   if (isPlaying) resetControlsHideTimer();
 }
-
 function onPlayerError(error) {
   console.error('YouTube error:', error);
   errorTextSpan.innerText = '⚠️ Failed to load video. Invalid ID or restricted content.';
@@ -923,7 +856,6 @@ function onPlayerError(error) {
   playerReady = false;
   isCreatingPlayer = false;
 }
-
 function updateTimeDisplay() {
   if (!player || !playerReady) return;
   const duration = player.getDuration();
@@ -935,7 +867,6 @@ function updateTimeDisplay() {
     timeDisplaySpan.innerText = `0:00 / 0:00`;
   }
 }
-
 function formatTime(seconds) {
   if (isNaN(seconds)) return "0:00";
   const hrs = Math.floor(seconds / 3600);
@@ -944,14 +875,12 @@ function formatTime(seconds) {
   if (hrs > 0) return `${hrs}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
   return `${mins}:${secs.toString().padStart(2,'0')}`;
 }
-
 function startProgressTimer() {
   if (progressInterval) clearInterval(progressInterval);
   progressInterval = setInterval(() => {
     if (player && playerReady && !isDraggingProgress) updateTimeDisplay();
   }, 250);
 }
-
 function seekToPosition(e) {
   if (!player || !playerReady) return;
   const rect = progressBarBg.getBoundingClientRect();
@@ -963,7 +892,6 @@ function seekToPosition(e) {
   }
   showControls();
 }
-
 function handleProgressDragStart(e) {
   if (!player || !playerReady) return;
   isDraggingProgress = true;
@@ -979,7 +907,6 @@ function handleProgressDragStart(e) {
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup', onUp);
 }
-
 function setVolume(value) {
   let vol = Math.min(100, Math.max(0, parseInt(value)));
   currentVolume = vol;
@@ -989,7 +916,6 @@ function setVolume(value) {
   isMuted = (vol === 0);
   showControls();
 }
-
 function toggleMute() {
   if (!player || !playerReady) return;
   if (isMuted || currentVolume === 0) {
@@ -1006,13 +932,11 @@ function toggleMute() {
   updateVolumeIcon(isMuted ? 0 : currentVolume);
   showControls();
 }
-
 function updateVolumeIcon(vol) {
   if (vol === 0) volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
   else if (vol < 40) volumeBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
   else volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
 }
-
 function changeSpeed() {
   const newSpeed = parseFloat(speedDropdown.value);
   if (!player || !playerReady) return;
@@ -1020,8 +944,6 @@ function changeSpeed() {
   player.setPlaybackRate(newSpeed);
   showControls();
 }
-speedDropdown.addEventListener('change', changeSpeed);
-
 function changeQuality() {
   const quality = qualityDropdown.value;
   if (!player || !playerReady) return;
@@ -1029,8 +951,6 @@ function changeQuality() {
   else player.setPlaybackQuality(quality);
   showControls();
 }
-qualityDropdown.addEventListener('change', changeQuality);
-
 function toggleFullscreen() {
   const container = document.querySelector('#videoPlayerModal .player-card');
   if (!document.fullscreenElement) {
@@ -1040,7 +960,6 @@ function toggleFullscreen() {
   }
   showControls();
 }
-
 function closeVideoModal() {
   if (document.fullscreenElement) {
     document.exitFullscreen();
@@ -1049,16 +968,15 @@ function closeVideoModal() {
   modal.classList.add('hidden');
   if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
   document.body.style.overflow = '';
-  // Remove any leftover iframe from the container
   const leftoverIframe = document.getElementById('youtubeIframe');
   if (leftoverIframe) leftoverIframe.remove();
 }
-
+// Keyboard shortcuts (keep as before, but improved)
 function handleVideoKeys(e) {
   if (modal.classList.contains('hidden')) return;
   if (!player || !playerReady) return;
   const tag = e.target.tagName;
-  if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT') return;
+  if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA') return;
   switch(e.key) {
     case ' ': case 'Space':
       e.preventDefault();
@@ -1092,10 +1010,24 @@ function handleVideoKeys(e) {
   }
 }
 
-// Event listeners
+// ---------- Event listeners ----------
 playPauseBtn.addEventListener('click', () => {
   if (player && playerReady) {
     (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+    showControls();
+  }
+});
+document.getElementById('skipBackBtn').addEventListener('click', () => {
+  if (player && playerReady) {
+    player.seekTo(Math.max(0, player.getCurrentTime() - 10), true);
+    updateTimeDisplay();
+    showControls();
+  }
+});
+document.getElementById('skipForwardBtn').addEventListener('click', () => {
+  if (player && playerReady) {
+    player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 10), true);
+    updateTimeDisplay();
     showControls();
   }
 });
@@ -1104,13 +1036,6 @@ progressBarBg.addEventListener('mousedown', handleProgressDragStart);
 volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
 volumeBtn.addEventListener('click', toggleMute);
 fullscreenBtn.addEventListener('click', toggleFullscreen);
-overlayVideo.addEventListener('click', () => {
-  if (player && playerReady) {
-    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
-    showControls();
-  }
-});
-overlayVideo.addEventListener('dblclick', toggleFullscreen);
 closeModalBtn.addEventListener('click', closeVideoModal);
 document.addEventListener('keydown', handleVideoKeys);
 window.addEventListener('fullscreenchange', () => {
@@ -1120,15 +1045,22 @@ window.addEventListener('fullscreenchange', () => {
     document.body.offsetHeight;
   }
 });
+// Click on video to play/pause (no overlay)
+document.querySelector('#videoPlayerModal .video-stage').addEventListener('click', (e) => {
+  if (!player || !playerReady) return;
+  if (e.target.closest('#customControls')) return; // don't toggle if clicking controls
+  (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+  showControls();
+});
+// Double‑click fullscreen
+document.querySelector('#videoPlayerModal .video-stage').addEventListener('dblclick', toggleFullscreen);
 
 function playVideo(videoId) {
   if (!videoId) {
     showToast("No YouTube video ID added yet.", "error");
     return;
   }
-  // Always close existing modal completely and recreate everything
   closeVideoModal();
-  // Small delay to ensure DOM cleanup
   setTimeout(() => {
     currentVideoId = videoId;
     modal.classList.remove('hidden');
@@ -1178,7 +1110,6 @@ async function populateLectureChapterSelect() {
     console.error('Error loading chapters:', e);
   }
 }
-
 async function populateDeleteChapterSelect() {
   const select = document.getElementById('delete-chapter-select');
   select.innerHTML = '<option value="">Loading chapters...</option>';
@@ -1201,7 +1132,6 @@ async function populateDeleteChapterSelect() {
     console.error('Error loading chapters:', e);
   }
 }
-
 async function populateDeleteLectureChapterSelect() {
   const select = document.getElementById('delete-lecture-chapter');
   select.innerHTML = '<option value="">Loading chapters...</option>';
@@ -1224,7 +1154,6 @@ async function populateDeleteLectureChapterSelect() {
     console.error('Error loading chapters:', e);
   }
 }
-
 async function populateUpdateChapterSelect() {
   const select = document.getElementById('update-lecture-chapter');
   select.innerHTML = '<option value="">Loading chapters...</option>';
@@ -1247,17 +1176,17 @@ async function populateUpdateChapterSelect() {
     console.error('Error loading chapters:', e);
   }
 }
-
 async function updateDeleteLectureOptions() {
   const chapterId = document.getElementById('delete-lecture-chapter').value;
-  const select = document.getElementById('delete-lecture-select'); select.innerHTML = '<option value="">Select Lecture to Delete</option>';
+  const select = document.getElementById('delete-lecture-select');
+  select.innerHTML = '<option value="">Select Lecture to Delete</option>';
   if(!chapterId) return;
   try { const res = await fetch(`/api/lectures?chapterId=${chapterId}`, { credentials: 'include' }); const lectures = await res.json(); lectures.forEach(lec => { const opt = document.createElement('option'); opt.value = lec._id; opt.textContent = lec.title; select.appendChild(opt); }); } catch(e) {}
 }
-
 async function populateUpdateLectureSelect() {
   const chapterId = document.getElementById('update-lecture-chapter').value;
-  const select = document.getElementById('update-lecture-select'); select.innerHTML = '<option value="">Select Lecture to Update</option>';
+  const select = document.getElementById('update-lecture-select');
+  select.innerHTML = '<option value="">Select Lecture to Update</option>';
   if(!chapterId) return;
   try { const res = await fetch(`/api/lectures?chapterId=${chapterId}`, { credentials: 'include' }); const lectures = await res.json(); lectures.forEach(lec => { const opt = document.createElement('option'); opt.value = lec._id; opt.textContent = lec.title; select.appendChild(opt); }); } catch(e) {}
 }
@@ -1266,105 +1195,33 @@ async function loadLectureForUpdate() {
   if(!lectureId) return;
   try { const res = await fetch(`/api/lectures/${lectureId}`, { credentials: 'include' }); if(!res.ok) throw new Error(); const lec = await res.json(); document.getElementById('update-title').value = lec.title || ''; document.getElementById('update-youtube').value = lec.youtubeId || ''; document.getElementById('update-image').value = lec.imageUrl || ''; document.getElementById('update-pdf').value = lec.pdfLink || ''; document.getElementById('update-dpp').value = lec.dppLink || ''; } catch(e) { showToast("Could not load lecture details.", "error"); }
 }
-// async function adminLogin() {
-//   const email = document.getElementById('adminEmail').value.trim();
-//   const password = document.getElementById('adminPass').value.trim();
-//   if(!email || !password) {
-//     showToast("Please enter email and password", "error");
-//     return;
-//   }
-//
-//   const loginBtn = document.querySelector('#loginModal .bg-blue-600');
-//   const originalText = loginBtn.textContent;
-//   loginBtn.textContent = 'Logging in...';
-//   loginBtn.disabled = true;
-//
-//   try {
-//     const res = await fetch('/api/login', {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ email, password }),
-//       credentials: 'include'
-//     });
-//     const data = await res.json();
-//     if(data.success && data.user.role === 'admin') {
-//       hideLoginModal();
-//       isAdmin = true;
-//       document.getElementById('manage-btn').classList.remove('hidden');
-//       document.getElementById('admin-login-btn').classList.add('hidden');
-//       showToast("✅ Admin logged in successfully!", "success");
-//       // Clear password field
-//       document.getElementById('adminPass').value = '';
-//     } else {
-//       showToast(data.msg || 'Invalid admin credentials', "error");
-//     }
-//   } catch(e) {
-//     showToast("Cannot connect to server", "error");
-//   } finally {
-//     loginBtn.textContent = originalText;
-//     loginBtn.disabled = false;
-//   }
-// }
-// function hideLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
 async function executeManageAction() {
   if (!isAdmin) { 
     showToast("Please login as Admin first", "error"); 
     hideManageModal(); 
     return; 
   }
-  
   const confirmBtn = document.querySelector('#manage-modal .bg-blue-600');
   const originalText = confirmBtn.textContent;
   confirmBtn.textContent = 'Processing...';
   confirmBtn.disabled = true;
-  
   try {
     if (manageMode === 1) {
       const title = document.getElementById('chapter-title').value.trim();
-      if (!title) { 
-        showToast("Chapter title is required", "error"); 
-        confirmBtn.textContent = originalText;
-        confirmBtn.disabled = false;
-        return; 
-      }
-      const res = await fetch('/api/chapters', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ subjectId, title, order: Date.now() }), 
-        credentials: 'include' 
-      });
+      if (!title) { showToast("Chapter title is required", "error"); confirmBtn.textContent = originalText; confirmBtn.disabled = false; return; }
+      const res = await fetch('/api/chapters', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subjectId, title, order: Date.now() }), credentials: 'include' });
       const data = await res.json();
       if (res.ok) {
         showToast("Chapter added successfully!", "success");
         document.getElementById('chapter-title').value = '';
-        await loadData(); // Refresh the page data
-      } else {
-        showToast(data.msg || "Failed to add chapter", "error");
-      }
+        await loadData();
+      } else showToast(data.msg || "Failed to add chapter", "error");
     }
     else if (manageMode === 2) {
       const title = document.getElementById('lecture-title').value.trim();
       const chapterId = document.getElementById('lecture-chapter-select').value;
-      if (!title || !chapterId) { 
-        showToast("Title and Chapter are required", "error"); 
-        confirmBtn.textContent = originalText;
-        confirmBtn.disabled = false;
-        return; 
-      }
-      const res = await fetch('/api/lectures', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          subjectId, chapterId, title, 
-          date: document.getElementById('lecture-date').value || new Date().toLocaleDateString('en-GB'), 
-          duration: document.getElementById('lecture-duration').value || "45m", 
-          youtubeId: document.getElementById('lecture-youtube').value.trim(), 
-          imageUrl: document.getElementById('lecture-image').value.trim(), 
-          pdfLink: document.getElementById('lecture-pdf').value.trim(), 
-          dppLink: document.getElementById('lecture-dpp').value.trim() 
-        }), 
-        credentials: 'include' 
-      });
+      if (!title || !chapterId) { showToast("Title and Chapter are required", "error"); confirmBtn.textContent = originalText; confirmBtn.disabled = false; return; }
+      const res = await fetch('/api/lectures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subjectId, chapterId, title, date: document.getElementById('lecture-date').value || new Date().toLocaleDateString('en-GB'), duration: document.getElementById('lecture-duration').value || "45m", youtubeId: document.getElementById('lecture-youtube').value.trim(), imageUrl: document.getElementById('lecture-image').value.trim(), pdfLink: document.getElementById('lecture-pdf').value.trim(), dppLink: document.getElementById('lecture-dpp').value.trim() }), credentials: 'include' });
       const data = await res.json();
       if (res.ok) {
         showToast("Lecture added successfully!", "success");
@@ -1374,87 +1231,45 @@ async function executeManageAction() {
         document.getElementById('lecture-pdf').value = '';
         document.getElementById('lecture-dpp').value = '';
         await loadData();
-      } else {
-        showToast(data.msg || "Failed to add lecture", "error");
-      }
+      } else showToast(data.msg || "Failed to add lecture", "error");
     }
     else if (manageMode === 3) {
       const chapterId = document.getElementById('delete-chapter-select').value;
-      if (!chapterId) { 
-        showToast("Select a chapter to delete", "error"); 
-        confirmBtn.textContent = originalText;
-        confirmBtn.disabled = false;
-        return; 
-      }
-      if (!confirm("Delete this chapter and all its lectures?")) {
-        confirmBtn.textContent = originalText;
-        confirmBtn.disabled = false;
-        return;
-      }
+      if (!chapterId) { showToast("Select a chapter to delete", "error"); confirmBtn.textContent = originalText; confirmBtn.disabled = false; return; }
+      if (!confirm("Delete this chapter and all its lectures?")) { confirmBtn.textContent = originalText; confirmBtn.disabled = false; return; }
       const res = await fetch(`/api/chapters/${chapterId}`, { method: 'DELETE', credentials: 'include' });
       if (res.ok) {
         showToast("Chapter deleted successfully!", "success");
-        // If we deleted the current chapter, select the first available
         const chaptersRes = await fetch(`/api/chapters?subjectId=${subjectId}`, { credentials: 'include' });
         const chapters = await chaptersRes.json();
-        if (chapters.length > 0) {
-          currentChapterId = chapters[0]._id;
-        } else {
-          currentChapterId = null;
-        }
+        if (chapters.length > 0) currentChapterId = chapters[0]._id;
+        else currentChapterId = null;
         await loadData();
-      } else {
-        showToast("Failed to delete chapter", "error");
-      }
+      } else showToast("Failed to delete chapter", "error");
     }
     else if (manageMode === 4) {
       const lectureId = document.getElementById('delete-lecture-select').value;
-      if (!lectureId) { 
-        showToast("Select a lecture to delete", "error"); 
-        confirmBtn.textContent = originalText;
-        confirmBtn.disabled = false;
-        return; 
-      }
-      if (!confirm("Delete this lecture?")) {
-        confirmBtn.textContent = originalText;
-        confirmBtn.disabled = false;
-        return;
-      }
+      if (!lectureId) { showToast("Select a lecture to delete", "error"); confirmBtn.textContent = originalText; confirmBtn.disabled = false; return; }
+      if (!confirm("Delete this lecture?")) { confirmBtn.textContent = originalText; confirmBtn.disabled = false; return; }
       const res = await fetch(`/api/lectures/${lectureId}`, { method: 'DELETE', credentials: 'include' });
-      if (res.ok) {
-        showToast("Lecture deleted successfully!", "success");
-        await loadData();
-      } else {
-        showToast("Failed to delete lecture", "error");
-      }
+      if (res.ok) { showToast("Lecture deleted successfully!", "success"); await loadData(); }
+      else showToast("Failed to delete lecture", "error");
     }
     else if (manageMode === 5) {
       const lectureId = document.getElementById('update-lecture-select').value;
-      if (!lectureId) { 
-        showToast("Select a lecture to update", "error"); 
-        confirmBtn.textContent = originalText;
-        confirmBtn.disabled = false;
-        return; 
-      }
+      if (!lectureId) { showToast("Select a lecture to update", "error"); confirmBtn.textContent = originalText; confirmBtn.disabled = false; return; }
       const updateData = {};
       const title = document.getElementById('update-title').value.trim();
       const youtubeId = document.getElementById('update-youtube').value.trim();
       const imageUrl = document.getElementById('update-image').value.trim();
       const pdfLink = document.getElementById('update-pdf').value.trim();
       const dppLink = document.getElementById('update-dpp').value.trim();
-      
       if (title) updateData.title = title;
       if (youtubeId) updateData.youtubeId = youtubeId;
       if (imageUrl) updateData.imageUrl = imageUrl;
       if (pdfLink) updateData.pdfLink = pdfLink;
       if (dppLink) updateData.dppLink = dppLink;
-      
-      const res = await fetch(`/api/lectures/${lectureId}`, { 
-        method: 'PUT', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify(updateData), 
-        credentials: 'include' 
-      });
+      const res = await fetch(`/api/lectures/${lectureId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updateData), credentials: 'include' });
       const data = await res.json();
       if (res.ok) {
         showToast("Lecture updated successfully!", "success");
@@ -1464,37 +1279,23 @@ async function executeManageAction() {
         document.getElementById('update-pdf').value = '';
         document.getElementById('update-dpp').value = '';
         await loadData();
-      } else {
-        showToast(data.msg || "Failed to update lecture", "error");
-      }
+      } else showToast(data.msg || "Failed to update lecture", "error");
     }
     else if (manageMode === 6) {
-  const jsonText = document.getElementById('bulk-json').value.trim();
-  if (!jsonText) { showToast("Please paste JSON", "error"); return; }
-
-  let payload;
-  try { payload = JSON.parse(jsonText); }
-  catch (e) { showToast("Invalid JSON format", "error"); return; }
-
-  // subjectId is taken from the URL
-  payload.subjectId = subjectId;
-
-  const res = await fetch('/api/lectures/bulk', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    credentials: 'include'
-  });
-  const data = await res.json();
-  if (res.ok) {
-    showToast(`✅ ${data.createdLectures} lectures added!`, "success");
-    document.getElementById('bulk-json').value = '';
-    await loadData();
-  } else {
-    showToast(data.error || "Failed to add lectures", "error");
-  }
-}
-    // Refresh all dropdowns in the modal
+      const jsonText = document.getElementById('bulk-json').value.trim();
+      if (!jsonText) { showToast("Please paste JSON", "error"); return; }
+      let payload;
+      try { payload = JSON.parse(jsonText); }
+      catch (e) { showToast("Invalid JSON format", "error"); return; }
+      payload.subjectId = subjectId;
+      const res = await fetch('/api/lectures/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`✅ ${data.createdLectures} lectures added!`, "success");
+        document.getElementById('bulk-json').value = '';
+        await loadData();
+      } else showToast(data.error || "Failed to add lectures", "error");
+    }
     if (manageMode === 2) await populateLectureChapterSelect();
     if (manageMode === 3) await populateDeleteChapterSelect();
     if (manageMode === 4) {
@@ -1505,96 +1306,10 @@ async function executeManageAction() {
       await populateUpdateChapterSelect();
       document.getElementById('update-lecture-select').innerHTML = '<option value="">Select Chapter first</option>';
     }
-    
-  } catch (err) { 
-    console.error(err); 
-    showToast("Action failed. Check console.", "error"); 
-  } finally {
-    confirmBtn.textContent = originalText;
-    confirmBtn.disabled = false;
-  }
+  } catch (err) { console.error(err); showToast("Action failed. Check console.", "error"); }
+  finally { confirmBtn.textContent = originalText; confirmBtn.disabled = false; }
 }
-
-// ========== ADDED: LONG-PRESS FOR 2X SPEED ==========
-const longPressDuration = 300; // ms
-let longPressTimer = null;
-let longPressActive = false;
-let speedBeforeLongPress = 1;
-
-const speedIndicator = document.createElement('div');
-speedIndicator.className = 'speed-indicator';
-speedIndicator.textContent = '2×';
-document.querySelector('#videoPlayerModal .video-stage').appendChild(speedIndicator);
-
-function startLongPress(e) {
-  if (!player || !playerReady) return;
-  if (e.type === 'touchstart' && e.touches.length > 1) return; // ignore multi-touch
-  // prevent starting long press on control elements
-  if (e.target.closest('#customControls') || e.target.closest('button, select, input')) return;
-
-  clearLongPress();
-  longPressTimer = setTimeout(() => {
-    longPressActive = true;
-    speedBeforeLongPress = player.getPlaybackRate();
-    player.setPlaybackRate(2);
-    speedIndicator.classList.add('active');
-    // also update speed dropdown visually (optional)
-    speedDropdown.value = '2';
-  }, longPressDuration);
-}
-
-function cancelLongPress(e) {
-  clearLongPress();
-  if (longPressActive && player && playerReady) {
-    player.setPlaybackRate(speedBeforeLongPress);
-    speedDropdown.value = speedBeforeLongPress;
-    longPressActive = false;
-    speedIndicator.classList.remove('active');
-  }
-}
-
-function clearLongPress() {
-  if (longPressTimer) {
-    clearTimeout(longPressTimer);
-    longPressTimer = null;
-  }
-}
-
-// Attach to overlay (covers the whole video stage)
-const videoOverlayEl = document.getElementById('videoOverlay');
-videoOverlayEl.addEventListener('mousedown', startLongPress);
-videoOverlayEl.addEventListener('touchstart', startLongPress, { passive: true });
-window.addEventListener('mouseup', cancelLongPress);
-window.addEventListener('touchend', cancelLongPress);
-window.addEventListener('touchcancel', cancelLongPress);
-// Prevent text selection while long-pressing
-videoOverlayEl.addEventListener('contextmenu', (e) => {
-  if (longPressActive) e.preventDefault();
-});
-
-// If user moves away, cancel (for touch especially)
-videoOverlayEl.addEventListener('mousemove', (e) => {
-  if (longPressActive || longPressTimer) cancelLongPress();
-});
-
-
-// ========== ADDED: SKIP BUTTONS (+10s / -10s) ==========
-document.getElementById('skipBackBtn').addEventListener('click', () => {
-  if (player && playerReady) {
-    player.seekTo(Math.max(0, player.getCurrentTime() - 10), true);
-    updateTimeDisplay();
-    showControls();
-  }
-});
-document.getElementById('skipForwardBtn').addEventListener('click', () => {
-  if (player && playerReady) {
-    player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 10), true);
-    updateTimeDisplay();
-    showControls();
-  }
-});
-
 window.onload = async () => { await checkAuth(); await loadData(); };
 </script>
 </body>
-</html>
+	</html>
