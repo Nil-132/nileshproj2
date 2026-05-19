@@ -1220,6 +1220,84 @@ async function executeManageAction() {
     if (manageMode === 5) { await populateUpdateChapterSelect(); document.getElementById('update-lecture-select').innerHTML = '<option value="">Select Chapter first</option>'; }
   } catch (err) { console.error(err); showToast("Action failed. Check console.", "error"); } finally { confirmBtn.textContent = originalText; confirmBtn.disabled = false; }
 }
+  // ========== ADDED: LONG-PRESS FOR 2X SPEED ==========
+const longPressDuration = 300; // ms
+let longPressTimer = null;
+let longPressActive = false;
+let speedBeforeLongPress = 1;
+
+const speedIndicator = document.createElement('div');
+speedIndicator.className = 'speed-indicator';
+speedIndicator.textContent = '2×';
+document.querySelector('#videoPlayerModal .video-stage').appendChild(speedIndicator);
+
+function startLongPress(e) {
+  if (!player || !playerReady) return;
+  if (e.type === 'touchstart' && e.touches.length > 1) return; // ignore multi-touch
+  // prevent starting long press on control elements
+  if (e.target.closest('#customControls') || e.target.closest('button, select, input')) return;
+
+  clearLongPress();
+  longPressTimer = setTimeout(() => {
+    longPressActive = true;
+    speedBeforeLongPress = player.getPlaybackRate();
+    player.setPlaybackRate(2);
+    speedIndicator.classList.add('active');
+    // also update speed dropdown visually (optional)
+    speedDropdown.value = '2';
+  }, longPressDuration);
+}
+
+function cancelLongPress(e) {
+  clearLongPress();
+  if (longPressActive && player && playerReady) {
+    player.setPlaybackRate(speedBeforeLongPress);
+    speedDropdown.value = speedBeforeLongPress;
+    longPressActive = false;
+    speedIndicator.classList.remove('active');
+  }
+}
+
+function clearLongPress() {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+}
+
+// Attach to overlay (covers the whole video stage)
+const videoOverlayEl = document.getElementById('videoOverlay');
+videoOverlayEl.addEventListener('mousedown', startLongPress);
+videoOverlayEl.addEventListener('touchstart', startLongPress, { passive: true });
+window.addEventListener('mouseup', cancelLongPress);
+window.addEventListener('touchend', cancelLongPress);
+window.addEventListener('touchcancel', cancelLongPress);
+// Prevent text selection while long-pressing
+videoOverlayEl.addEventListener('contextmenu', (e) => {
+  if (longPressActive) e.preventDefault();
+});
+
+// If user moves away, cancel (for touch especially)
+videoOverlayEl.addEventListener('mousemove', (e) => {
+  if (longPressActive || longPressTimer) cancelLongPress();
+});
+
+
+// ========== ADDED: SKIP BUTTONS (+10s / -10s) ==========
+document.getElementById('skipBackBtn').addEventListener('click', () => {
+  if (player && playerReady) {
+    player.seekTo(Math.max(0, player.getCurrentTime() - 10), true);
+    updateTimeDisplay();
+    showControls();
+  }
+});
+document.getElementById('skipForwardBtn').addEventListener('click', () => {
+  if (player && playerReady) {
+    player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 10), true);
+    updateTimeDisplay();
+    showControls();
+  }
+});
 window.onload = async () => { await checkAuth(); await loadData(); };
 </script>
 </body>
