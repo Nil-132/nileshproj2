@@ -326,13 +326,7 @@
     }
     .speed-indicator.active { opacity: 1; }
 
-    /* YouTube branding patches (non-interactive) */
-    .branding-patch {
-      position: absolute;
-      background: #000;
-      pointer-events: none;
-      z-index: 21;
-    }
+    /* removed black patches – no longer needed */
 
     .loading-spinner {
       width: 48px; height: 48px;
@@ -494,7 +488,6 @@
 <div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
   <div class="player-card w-full max-w-5xl">
     <div class="video-stage relative" id="videoStageContainer">
-      <!-- iframe injected here -->
       <div id="videoOverlay" class="absolute inset-0 z-20 cursor-pointer"></div>
       <div id="centerPlayIcon" class="center-play-icon"><i class="fas fa-play"></i></div>
       <div id="messagePanel" class="absolute inset-0 bg-black/80 backdrop-blur-xl z-40 flex items-center justify-center flex-col gap-4 text-white hidden">
@@ -502,11 +495,7 @@
         <div id="errorText">Loading video ...</div>
       </div>
       <div class="speed-indicator" id="speedIndicator">2×</div>
-
-      <!-- YouTube branding patches (hidden with black covers) -->
-      <div class="branding-patch" style="bottom:0; right:0; width:48px; height:48px;"></div>
-      <div class="branding-patch" style="top:0; left:0; width:80px; height:36px;"></div>
-      <div class="branding-patch" style="top:0; right:0; width:36px; height:36px;"></div>
+      <!-- black patches completely removed -->
     </div>
 
     <div class="custom-controls" id="customControls">
@@ -1119,6 +1108,17 @@ window.addEventListener('fullscreenchange', () => {
     document.body.offsetHeight;
   }
 });
+
+// ---------- Progress bar seeking (fixed for both click and touch) ----------
+progressBarBg.addEventListener('click', (e) => {
+  e.stopPropagation();
+  seekToPosition(e);
+});
+progressBarBg.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  seekToPosition(e.touches[0]);
+});
+progressBarBg.addEventListener('mousedown', handleProgressDragStart);
 
 // Keyboard shortcuts
 function handleVideoKeys(e) {
