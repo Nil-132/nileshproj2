@@ -147,15 +147,15 @@
 
     .custom-controls {
       position: absolute;
-      bottom: 0;
+      bottom: 6px;                      /* moved closer to the bottom */
       left: 0;
       right: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
-      padding: 16px 20px 20px 20px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+      padding: 8px 12px 12px 12px;      /* reduced padding */
       display: flex;
       flex-wrap: nowrap;
       align-items: center;
-      gap: 12px;
+      gap: 8px;                         /* smaller gap between controls */
       border-top: none;
       backdrop-filter: none;
       transition: opacity 0.3s, visibility 0.3s;
@@ -174,50 +174,48 @@
       background: transparent;
       border: none;
       color: #f0f0f0;
-      width: 44px;
-      height: 44px;
+      width: 36px;                     /* smaller buttons */
+      height: 36px;
       border-radius: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 1.4rem;
+      font-size: 1.1rem;               /* smaller icons */
       flex-shrink: 0;
     }
     .ctrl-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
     .ctrl-btn:active { transform: scale(0.96); }
 
-    /* All control buttons (play, skip, volume, gear, fullscreen) same size */
-    .ctrl-btn i { pointer-events: none; }
-
     .progress-bar-bg {
       flex: 1;
-      height: 10px;
+      height: 8px;                     /* slightly thicker for easy scrubbing */
       background: rgba(255,255,255,0.3);
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
       transition: height 0.1s;
-      min-width: 50px;
-      margin: 0 4px;
+      min-width: 0;                    /* allow shrinking */
+      margin: 0 2px;
     }
-    .progress-bar-bg:hover { height: 14px; background: rgba(255,255,255,0.5); }
+    .progress-bar-bg:hover { height: 10px; background: rgba(255,255,255,0.5); }
     .progress-fill {
       width: 0%;
       height: 100%;
       background: linear-gradient(90deg, #ff4757, #ff6b81);
-      border-radius: 10px;
+      border-radius: 8px;
       pointer-events: none;
     }
     .time-display {
       font-family: monospace;
-      font-size: 0.8rem;
+      font-size: 0.7rem;               /* smaller time */
       background: rgba(0,0,0,0.5);
-      padding: 4px 8px;
-      border-radius: 16px;
+      padding: 3px 6px;
+      border-radius: 12px;
       color: #fff;
       white-space: nowrap;
       letter-spacing: 0.5px;
+      flex-shrink: 0;
     }
 
     /* Volume control container */
@@ -228,12 +226,12 @@
     }
     .volume-slider-vertical {
       position: absolute;
-      bottom: 50px;
+      bottom: 42px;
       left: 50%;
       transform: translateX(-50%);
-      width: 30px;
+      width: 32px;
       height: 100px;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       border-radius: 16px;
       display: flex;
       flex-direction: column;
@@ -252,7 +250,7 @@
       visibility: visible;
     }
     .volume-slider-vertical input[type=range] {
-      writing-mode: bt-lr; /* IE */
+      writing-mode: bt-lr;
       -webkit-appearance: slider-vertical;
       width: 6px;
       height: 80%;
@@ -262,29 +260,28 @@
     }
     .volume-slider-vertical input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 16px; height: 16px;
       background: #ff6b81;
       border-radius: 50%;
       cursor: pointer;
     }
 
-    /* Gear dropdown for speed/quality */
+    /* Gear dropdown */
     .gear-dropdown {
       position: relative;
     }
     .gear-dropdown-content {
       position: absolute;
-      bottom: 50px;
+      bottom: 42px;
       right: 0;
       background: rgba(0,0,0,0.9);
       border-radius: 16px;
-      padding: 12px 16px;
+      padding: 10px 14px;
       color: white;
-      min-width: 140px;
+      min-width: 130px;
       display: none;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       z-index: 40;
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255,255,255,0.2);
@@ -293,7 +290,7 @@
       display: flex;
     }
     .gear-dropdown-content label {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 500;
       display: flex;
       justify-content: space-between;
@@ -305,27 +302,37 @@
       color: white;
       padding: 4px 8px;
       border-radius: 8px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       margin-left: 8px;
     }
 
+    /* Speed indicator – now at top center, small and transparent */
     .speed-indicator {
       position: absolute;
-      top: 50%; left: 50%;
+      top: 10%;
+      left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
       color: #fff;
-      font-weight: 700;
-      font-size: 1.5rem;
-      padding: 12px 24px;
-      border-radius: 16px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 6px 16px;
+      border-radius: 20px;
       z-index: 40;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.15s;
     }
     .speed-indicator.active { opacity: 1; }
+
+    /* YouTube branding patches (non-interactive) */
+    .branding-patch {
+      position: absolute;
+      background: #000;
+      pointer-events: none;
+      z-index: 21;
+    }
 
     .loading-spinner {
       width: 48px; height: 48px;
@@ -336,11 +343,20 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Responsive tweaks */
     @media (max-width: 640px) {
-      .ctrl-btn { width: 48px; height: 48px; font-size: 1.3rem; }
-      .progress-bar-bg { height: 8px; }
-      .custom-controls { padding: 14px 14px; gap: 10px; }
-      .time-display { font-size: 0.7rem; }
+      .ctrl-btn {
+        width: 40px; height: 40px;
+        font-size: 1.2rem;
+      }
+      .custom-controls {
+        padding: 8px 8px 10px 8px;
+        gap: 6px;
+      }
+      .time-display {
+        font-size: 0.65rem;
+        padding: 2px 4px;
+      }
     }
 
     .manage-form-container {
@@ -478,6 +494,7 @@
 <div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
   <div class="player-card w-full max-w-5xl">
     <div class="video-stage relative" id="videoStageContainer">
+      <!-- iframe injected here -->
       <div id="videoOverlay" class="absolute inset-0 z-20 cursor-pointer"></div>
       <div id="centerPlayIcon" class="center-play-icon"><i class="fas fa-play"></i></div>
       <div id="messagePanel" class="absolute inset-0 bg-black/80 backdrop-blur-xl z-40 flex items-center justify-center flex-col gap-4 text-white hidden">
@@ -485,22 +502,23 @@
         <div id="errorText">Loading video ...</div>
       </div>
       <div class="speed-indicator" id="speedIndicator">2×</div>
+
+      <!-- YouTube branding patches (hidden with black covers) -->
+      <div class="branding-patch" style="bottom:0; right:0; width:48px; height:48px;"></div>
+      <div class="branding-patch" style="top:0; left:0; width:80px; height:36px;"></div>
+      <div class="branding-patch" style="top:0; right:0; width:36px; height:36px;"></div>
     </div>
 
     <div class="custom-controls" id="customControls">
-      <!-- Play/Pause -->
       <button class="ctrl-btn" id="playPauseBtn"><i class="fas fa-pause"></i></button>
-      <!-- Skip back/forward – identical style to play/pause -->
       <button class="ctrl-btn" id="skipBackBtn" title="Back 10s"><i class="fas fa-backward"></i></button>
       <button class="ctrl-btn" id="skipForwardBtn" title="Forward 10s"><i class="fas fa-forward"></i></button>
 
-      <!-- Progress bar + time -->
-      <div class="flex-1 flex items-center gap-2 min-w-[60px]">
+      <div class="flex-1 flex items-center gap-1 min-w-0">
         <div class="progress-bar-bg" id="progressBarBg"><div class="progress-fill" id="progressFill"></div></div>
         <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
       </div>
 
-      <!-- Volume with vertical slider -->
       <div class="volume-container" id="volumeContainer">
         <button class="ctrl-btn" id="volumeBtn"><i class="fas fa-volume-up"></i></button>
         <div class="volume-slider-vertical" id="volumeSliderVertical">
@@ -508,7 +526,6 @@
         </div>
       </div>
 
-      <!-- Gear dropdown (speed + quality) -->
       <div class="gear-dropdown" id="gearDropdown">
         <button class="ctrl-btn" id="gearBtn"><i class="fas fa-cog"></i></button>
         <div class="gear-dropdown-content" id="gearDropdownContent">
@@ -529,9 +546,8 @@
         </div>
       </div>
 
-      <!-- Fullscreen & close -->
       <button class="ctrl-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></button>
-      <button class="ctrl-btn ml-auto text-white bg-white/10 rounded-full w-8 h-8" id="closeVideoModal"><i class="fas fa-times"></i></button>
+      <button class="ctrl-btn" id="closeVideoModal" style="width:32px; height:32px; background:rgba(255,255,255,0.15);"><i class="fas fa-times"></i></button>
     </div>
   </div>
 </div>
@@ -1021,7 +1037,6 @@ gearBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   gearContent.classList.toggle('active');
 });
-// Close gear dropdown when clicking outside
 document.addEventListener('click', (e) => {
   if (!gearDropdown.contains(e.target)) {
     gearContent.classList.remove('active');
@@ -1035,19 +1050,17 @@ volumeBtn.addEventListener('click', (e) => {
   showControls();
 });
 volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
-// Show vertical slider on hover (desktop) and long‑press (mobile)
 volumeContainer.addEventListener('mouseenter', () => {
   volumeContainer.classList.add('show-vertical');
 });
 volumeContainer.addEventListener('mouseleave', () => {
   volumeContainer.classList.remove('show-vertical');
 });
-// For mobile: show on long press of volume button
 volumeBtn.addEventListener('touchstart', (e) => {
   e.preventDefault();
   volumeContainer.classList.add('show-vertical');
   setTimeout(() => {
-    if (volumeContainer.matches(':hover') === false) {
+    if (!volumeContainer.matches(':hover')) {
       volumeContainer.classList.remove('show-vertical');
     }
   }, 1500);
