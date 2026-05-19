@@ -170,6 +170,35 @@
 .player-card:-webkit-full-screen .custom-controls {
   flex-shrink: 0;
 }
+
+    /* --- Long-press speed indicator --- */
+.speed-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.5rem;
+  padding: 12px 24px;
+  border-radius: 16px;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.speed-indicator.active {
+  opacity: 1;
+}
+
+/* Skip buttons in control bar – same style as ctrl-btn */
+.ctrl-btn.skip-btn {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
     .ctrl-btn {
       background: transparent;
       border: none;
