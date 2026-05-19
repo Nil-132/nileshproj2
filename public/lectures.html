@@ -413,11 +413,12 @@
   </div>
 </div>
 
-<!-- Advanced Video Player Modal -->
+<!-- Advanced Video Player Modal – corrected with overlay -->
 <div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
   <div class="player-card w-full max-w-5xl">
     <div class="video-stage relative" id="videoStageContainer">
       <!-- iframe will be dynamically created here -->
+      <div id="videoOverlay" class="absolute inset-0 z-20 cursor-pointer"></div>
       <div id="centerPlayIcon" class="center-play-icon"><i class="fas fa-play"></i></div>
       <div id="messagePanel" class="absolute inset-0 bg-black/80 backdrop-blur-xl z-40 flex items-center justify-center flex-col gap-4 text-white hidden">
         <div class="loading-spinner"></div>
@@ -496,7 +497,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ========== YOUR ORIGINAL APP LOGIC ==========
+// ========== APP LOGIC ==========
 const urlParams = new URLSearchParams(window.location.search);
 const subjectId = urlParams.get('subjectId');
 const subjectName = urlParams.get('subjectName') || 'All Classes';
@@ -514,13 +515,11 @@ async function checkAuth() {
     const res = await fetch('/api/me', { credentials: 'include' });
     if (!res.ok) throw new Error();
     const data = await res.json();
-    if (data.success) {
-      if (data.user.role === 'admin') {
-        document.getElementById('manage-btn').classList.remove('hidden');
-        isAdmin = true;
-      }
+    if (data.success && data.user.role === 'admin') {
+      document.getElementById('manage-btn').classList.remove('hidden');
+      isAdmin = true;
     }
-  } catch (err) { /* not logged in – nothing to show */ }
+  } catch (err) { /* not logged in */ }
 }
 
 async function logout() {
@@ -563,7 +562,6 @@ function renderSidebar(chapters) {
     container.appendChild(div);
   });
 }
-
 function renderLectures(lectures) {
   const container = document.getElementById('main-content');
   let html = '';
@@ -646,7 +644,7 @@ function selectChapter(chapterId) {
   if (window.innerWidth < 768) toggleSidebar();
 }
 
-// ========== ADVANCED VIDEO PLAYER (YouTube‑like, distraction‑free) ==========
+// ========== ADVANCED VIDEO PLAYER (distraction‑free, overlay protected) ==========
 let player = null;
 let playerReady = false;
 let currentVideoId = null;
@@ -660,6 +658,7 @@ let isCreatingPlayer = false;
 
 const modal = document.getElementById('videoPlayerModal');
 const videoStageContainer = document.getElementById('videoStageContainer');
+const overlayVideo = document.getElementById('videoOverlay');
 const playPauseBtn = document.getElementById('playPauseBtn');
 const progressBarBg = document.getElementById('progressBarBg');
 const progressFill = document.getElementById('progressFill');
@@ -676,7 +675,7 @@ const closeModalBtn = document.getElementById('closeVideoModal');
 const customControls = document.getElementById('customControls');
 const speedIndicator = document.getElementById('speedIndicator');
 
-// ---------- Long‑press (2× speed) ----------
+// ---------- Long‑press (2× speed) on overlay ----------
 const longPressDuration = 300;
 let longPressTimer = null;
 let longPressActive = false;
@@ -685,7 +684,9 @@ let speedBeforeLongPress = 1;
 function startLongPress(e) {
   if (!player || !playerReady) return;
   if (e.type === 'touchstart' && e.touches.length > 1) return;
+  // prevent starting long press on control elements
   if (e.target.closest('#customControls') || e.target.closest('button, select, input')) return;
+
   clearLongPress();
   longPressTimer = setTimeout(() => {
     longPressActive = true;
@@ -711,14 +712,15 @@ function clearLongPress() {
   }
 }
 
-// Attach long‑press to the video stage (not just overlay)
-const videoStage = document.querySelector('#videoPlayerModal .video-stage');
-videoStage.addEventListener('mousedown', startLongPress);
-videoStage.addEventListener('touchstart', startLongPress, { passive: true });
+// Attach long‑press to the overlay
+overlayVideo.addEventListener('mousedown', startLongPress);
+overlayVideo.addEventListener('touchstart', startLongPress, { passive: true });
 window.addEventListener('mouseup', cancelLongPress);
 window.addEventListener('touchend', cancelLongPress);
 window.addEventListener('touchcancel', cancelLongPress);
-videoStage.addEventListener('contextmenu', (e) => { if (longPressActive) e.preventDefault(); });
+overlayVideo.addEventListener('contextmenu', (e) => {
+  if (longPressActive) e.preventDefault();
+});
 
 // ---------- Controls auto‑hide ----------
 function resetControlsHideTimer() {
@@ -739,11 +741,10 @@ function showControls() {
   }
 }
 function bindControlEvents() {
-  const stage = document.querySelector('#videoPlayerModal .video-stage');
-  if (stage) {
-    stage.addEventListener('mousemove', showControls);
-    stage.addEventListener('click', showControls);
-    stage.addEventListener('touchstart', showControls);
+  if (overlayVideo) {
+    overlayVideo.addEventListener('mousemove', showControls);
+    overlayVideo.addEventListener('click', showControls);
+    overlayVideo.addEventListener('touchstart', showControls);
   }
   if (customControls) {
     customControls.addEventListener('mouseenter', () => {
@@ -775,7 +776,7 @@ function destroyPlayer() {
 function createFreshIframe() {
   const iframe = document.createElement('iframe');
   iframe.id = 'youtubeIframe';
-  iframe.className = 'absolute inset-0 w-full h-full border-0';
+  iframe.className = 'absolute inset-0 w-full h-full border-0 pointer-events-none'; // <-- critical: block YouTube touches
   iframe.allow = 'autoplay; fullscreen; encrypted-media';
   iframe.allowFullscreen = true;
   return iframe;
@@ -971,7 +972,7 @@ function closeVideoModal() {
   const leftoverIframe = document.getElementById('youtubeIframe');
   if (leftoverIframe) leftoverIframe.remove();
 }
-// Keyboard shortcuts (keep as before, but improved)
+// Keyboard shortcuts
 function handleVideoKeys(e) {
   if (modal.classList.contains('hidden')) return;
   if (!player || !playerReady) return;
@@ -1036,6 +1037,13 @@ progressBarBg.addEventListener('mousedown', handleProgressDragStart);
 volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
 volumeBtn.addEventListener('click', toggleMute);
 fullscreenBtn.addEventListener('click', toggleFullscreen);
+overlayVideo.addEventListener('click', () => {
+  if (player && playerReady) {
+    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+    showControls();
+  }
+});
+overlayVideo.addEventListener('dblclick', toggleFullscreen);
 closeModalBtn.addEventListener('click', closeVideoModal);
 document.addEventListener('keydown', handleVideoKeys);
 window.addEventListener('fullscreenchange', () => {
@@ -1045,15 +1053,6 @@ window.addEventListener('fullscreenchange', () => {
     document.body.offsetHeight;
   }
 });
-// Click on video to play/pause (no overlay)
-document.querySelector('#videoPlayerModal .video-stage').addEventListener('click', (e) => {
-  if (!player || !playerReady) return;
-  if (e.target.closest('#customControls')) return; // don't toggle if clicking controls
-  (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
-  showControls();
-});
-// Double‑click fullscreen
-document.querySelector('#videoPlayerModal .video-stage').addEventListener('dblclick', toggleFullscreen);
 
 function playVideo(videoId) {
   if (!videoId) {
