@@ -151,11 +151,11 @@
       left: 0;
       right: 0;
       background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
-      padding: 20px 24px 24px 24px;
+      padding: 16px 20px 20px 20px;
       display: flex;
       flex-wrap: nowrap;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       border-top: none;
       backdrop-filter: none;
       transition: opacity 0.3s, visibility 0.3s;
@@ -174,78 +174,141 @@
       background: transparent;
       border: none;
       color: #f0f0f0;
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       flex-shrink: 0;
     }
     .ctrl-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
     .ctrl-btn:active { transform: scale(0.96); }
 
-    .skip-btn { font-size: 1rem; font-weight: 600; }
+    /* All control buttons (play, skip, volume, gear, fullscreen) same size */
+    .ctrl-btn i { pointer-events: none; }
 
     .progress-bar-bg {
       flex: 1;
-      height: 8px;
+      height: 10px;
       background: rgba(255,255,255,0.3);
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       transition: height 0.1s;
       min-width: 50px;
+      margin: 0 4px;
     }
-    .progress-bar-bg:hover { height: 10px; background: rgba(255,255,255,0.5); }
+    .progress-bar-bg:hover { height: 14px; background: rgba(255,255,255,0.5); }
     .progress-fill {
       width: 0%;
       height: 100%;
       background: linear-gradient(90deg, #ff4757, #ff6b81);
-      border-radius: 8px;
+      border-radius: 10px;
       pointer-events: none;
     }
     .time-display {
       font-family: monospace;
-      font-size: 0.95rem;
-      background: rgba(0,0,0,0.6);
-      padding: 6px 12px;
-      border-radius: 24px;
+      font-size: 0.8rem;
+      background: rgba(0,0,0,0.5);
+      padding: 4px 8px;
+      border-radius: 16px;
       color: #fff;
       white-space: nowrap;
+      letter-spacing: 0.5px;
     }
-    .volume-slider {
-      width: 80px;
-      height: 5px;
-      -webkit-appearance: none;
-      background: rgba(255,255,255,0.3);
+
+    /* Volume control container */
+    .volume-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .volume-slider-vertical {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 100px;
+      background: rgba(0,0,0,0.8);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      z-index: 35;
+      pointer-events: auto;
+    }
+    .volume-container:hover .volume-slider-vertical,
+    .volume-container.show-vertical .volume-slider-vertical {
+      opacity: 1;
+      visibility: visible;
+    }
+    .volume-slider-vertical input[type=range] {
+      writing-mode: bt-lr; /* IE */
+      -webkit-appearance: slider-vertical;
+      width: 6px;
+      height: 80%;
+      background: rgba(255,255,255,0.4);
       border-radius: 5px;
       outline: none;
-      cursor: pointer;
     }
-    .volume-slider::-webkit-slider-thumb {
+    .volume-slider-vertical input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px; height: 16px;
+      width: 16px;
+      height: 16px;
       background: #ff6b81;
       border-radius: 50%;
-      box-shadow: 0 0 2px white;
-    }
-    .speed-dropdown, .quality-dropdown {
-      background: rgba(0,0,0,0.8);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      padding: 8px 14px;
-      border-radius: 32px;
-      font-size: 0.9rem;
       cursor: pointer;
-      backdrop-filter: blur(4px);
-      flex-shrink: 0;
     }
-    .speed-dropdown option, .quality-dropdown option { background: #1f2937; color: white; }
 
-    /* Speed indicator (long‑press) */
+    /* Gear dropdown for speed/quality */
+    .gear-dropdown {
+      position: relative;
+    }
+    .gear-dropdown-content {
+      position: absolute;
+      bottom: 50px;
+      right: 0;
+      background: rgba(0,0,0,0.9);
+      border-radius: 16px;
+      padding: 12px 16px;
+      color: white;
+      min-width: 140px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 40;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .gear-dropdown-content.active {
+      display: flex;
+    }
+    .gear-dropdown-content label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .gear-dropdown-content select {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-left: 8px;
+    }
+
     .speed-indicator {
       position: absolute;
       top: 50%; left: 50%;
@@ -274,12 +337,10 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     @media (max-width: 640px) {
-      .ctrl-btn { width: 44px; height: 44px; font-size: 1.2rem; }
-      .progress-bar-bg { height: 6px; }
-      .volume-slider { width: 60px; }
-      .speed-dropdown, .quality-dropdown { padding: 6px 10px; font-size: 0.8rem; }
-      .custom-controls { padding: 16px 16px; gap: 10px; }
-      .time-display { font-size: 0.8rem; }
+      .ctrl-btn { width: 48px; height: 48px; font-size: 1.3rem; }
+      .progress-bar-bg { height: 8px; }
+      .custom-controls { padding: 14px 14px; gap: 10px; }
+      .time-display { font-size: 0.7rem; }
     }
 
     .manage-form-container {
@@ -413,44 +474,62 @@
   </div>
 </div>
 
-<!-- Advanced Video Player Modal – corrected with overlay -->
+<!-- Advanced Video Player Modal -->
 <div id="videoPlayerModal" class="hidden fixed inset-0 video-modal-overlay flex items-center justify-center p-2 md:p-4 z-[300]">
   <div class="player-card w-full max-w-5xl">
     <div class="video-stage relative" id="videoStageContainer">
-      <!-- iframe will be dynamically created here -->
       <div id="videoOverlay" class="absolute inset-0 z-20 cursor-pointer"></div>
       <div id="centerPlayIcon" class="center-play-icon"><i class="fas fa-play"></i></div>
       <div id="messagePanel" class="absolute inset-0 bg-black/80 backdrop-blur-xl z-40 flex items-center justify-center flex-col gap-4 text-white hidden">
         <div class="loading-spinner"></div>
         <div id="errorText">Loading video ...</div>
       </div>
-      <!-- Speed indicator for long‑press -->
       <div class="speed-indicator" id="speedIndicator">2×</div>
     </div>
 
-    <!-- Custom controls overlay -->
     <div class="custom-controls" id="customControls">
+      <!-- Play/Pause -->
       <button class="ctrl-btn" id="playPauseBtn"><i class="fas fa-pause"></i></button>
-      <button class="ctrl-btn skip-btn" id="skipBackBtn" title="Back 10s">⏪</button>
-      <button class="ctrl-btn skip-btn" id="skipForwardBtn" title="Forward 10s">⏩</button>
-      <div class="flex-1 flex items-center gap-3 min-w-[80px]">
+      <!-- Skip back/forward – identical style to play/pause -->
+      <button class="ctrl-btn" id="skipBackBtn" title="Back 10s"><i class="fas fa-backward"></i></button>
+      <button class="ctrl-btn" id="skipForwardBtn" title="Forward 10s"><i class="fas fa-forward"></i></button>
+
+      <!-- Progress bar + time -->
+      <div class="flex-1 flex items-center gap-2 min-w-[60px]">
         <div class="progress-bar-bg" id="progressBarBg"><div class="progress-fill" id="progressFill"></div></div>
         <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
       </div>
-      <div class="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full">
+
+      <!-- Volume with vertical slider -->
+      <div class="volume-container" id="volumeContainer">
         <button class="ctrl-btn" id="volumeBtn"><i class="fas fa-volume-up"></i></button>
-        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="70">
+        <div class="volume-slider-vertical" id="volumeSliderVertical">
+          <input type="range" id="volumeSlider" min="0" max="100" value="70" orient="vertical">
+        </div>
       </div>
-      <select id="speedDropdown" class="speed-dropdown">
-        <option value="0.5">0.5x</option><option value="0.75">0.75x</option>
-        <option value="1" selected>1x</option><option value="1.25">1.25x</option>
-        <option value="1.5">1.5x</option><option value="2">2x</option>
-      </select>
-      <select id="qualityDropdown" class="quality-dropdown">
-        <option value="auto">Auto</option>
-        <option value="144p">144p</option><option value="240p">240p</option><option value="360p">360p</option>
-        <option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option>
-      </select>
+
+      <!-- Gear dropdown (speed + quality) -->
+      <div class="gear-dropdown" id="gearDropdown">
+        <button class="ctrl-btn" id="gearBtn"><i class="fas fa-cog"></i></button>
+        <div class="gear-dropdown-content" id="gearDropdownContent">
+          <label>Speed
+            <select id="speedDropdown">
+              <option value="0.5">0.5x</option><option value="0.75">0.75x</option>
+              <option value="1" selected>1x</option><option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option><option value="2">2x</option>
+            </select>
+          </label>
+          <label>Quality
+            <select id="qualityDropdown">
+              <option value="auto">Auto</option><option value="144p">144p</option>
+              <option value="240p">240p</option><option value="360p">360p</option>
+              <option value="480p">480p</option><option value="720p">720p</option><option value="1080p">1080p</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- Fullscreen & close -->
       <button class="ctrl-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></button>
       <button class="ctrl-btn ml-auto text-white bg-white/10 rounded-full w-8 h-8" id="closeVideoModal"><i class="fas fa-times"></i></button>
     </div>
@@ -644,7 +723,7 @@ function selectChapter(chapterId) {
   if (window.innerWidth < 768) toggleSidebar();
 }
 
-// ========== ADVANCED VIDEO PLAYER (distraction‑free, overlay protected) ==========
+// ========== ADVANCED VIDEO PLAYER (distraction‑free) ==========
 let player = null;
 let playerReady = false;
 let currentVideoId = null;
@@ -674,6 +753,10 @@ const errorTextSpan = document.getElementById('errorText');
 const closeModalBtn = document.getElementById('closeVideoModal');
 const customControls = document.getElementById('customControls');
 const speedIndicator = document.getElementById('speedIndicator');
+const volumeContainer = document.getElementById('volumeContainer');
+const gearDropdown = document.getElementById('gearDropdown');
+const gearBtn = document.getElementById('gearBtn');
+const gearContent = document.getElementById('gearDropdownContent');
 
 // ---------- Long‑press (2× speed) on overlay ----------
 const longPressDuration = 300;
@@ -684,9 +767,7 @@ let speedBeforeLongPress = 1;
 function startLongPress(e) {
   if (!player || !playerReady) return;
   if (e.type === 'touchstart' && e.touches.length > 1) return;
-  // prevent starting long press on control elements
   if (e.target.closest('#customControls') || e.target.closest('button, select, input')) return;
-
   clearLongPress();
   longPressTimer = setTimeout(() => {
     longPressActive = true;
@@ -711,16 +792,12 @@ function clearLongPress() {
     longPressTimer = null;
   }
 }
-
-// Attach long‑press to the overlay
 overlayVideo.addEventListener('mousedown', startLongPress);
 overlayVideo.addEventListener('touchstart', startLongPress, { passive: true });
 window.addEventListener('mouseup', cancelLongPress);
 window.addEventListener('touchend', cancelLongPress);
 window.addEventListener('touchcancel', cancelLongPress);
-overlayVideo.addEventListener('contextmenu', (e) => {
-  if (longPressActive) e.preventDefault();
-});
+overlayVideo.addEventListener('contextmenu', (e) => { if (longPressActive) e.preventDefault(); });
 
 // ---------- Controls auto‑hide ----------
 function resetControlsHideTimer() {
@@ -731,7 +808,7 @@ function resetControlsHideTimer() {
       if (player && playerReady && !isDraggingProgress && customControls) {
         customControls.classList.add('hide-controls');
       }
-    }, 2000);
+    }, 2500);
   }
 }
 function showControls() {
@@ -741,31 +818,21 @@ function showControls() {
   }
 }
 function bindControlEvents() {
-  if (overlayVideo) {
-    overlayVideo.addEventListener('mousemove', showControls);
-    overlayVideo.addEventListener('click', showControls);
-    overlayVideo.addEventListener('touchstart', showControls);
-  }
-  if (customControls) {
-    customControls.addEventListener('mouseenter', () => {
-      if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
-      customControls.classList.remove('hide-controls');
-    });
-    customControls.addEventListener('mouseleave', resetControlsHideTimer);
-  }
+  overlayVideo.addEventListener('mousemove', showControls);
+  overlayVideo.addEventListener('click', showControls);
+  overlayVideo.addEventListener('touchstart', showControls);
+  customControls.addEventListener('mouseenter', () => {
+    if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
+    customControls.classList.remove('hide-controls');
+  });
+  customControls.addEventListener('mouseleave', resetControlsHideTimer);
 }
 
 // ---------- Player lifecycle ----------
 function destroyPlayer() {
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
-  }
+  if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
   if (player) {
-    try {
-      player.pauseVideo();
-      player.destroy();
-    } catch(e) { console.warn('Player destroy error:', e); }
+    try { player.pauseVideo(); player.destroy(); } catch(e) {}
     player = null;
   }
   playerReady = false;
@@ -776,7 +843,7 @@ function destroyPlayer() {
 function createFreshIframe() {
   const iframe = document.createElement('iframe');
   iframe.id = 'youtubeIframe';
-  iframe.className = 'absolute inset-0 w-full h-full border-0 pointer-events-none'; // <-- critical: block YouTube touches
+  iframe.className = 'absolute inset-0 w-full h-full border-0 pointer-events-none';
   iframe.allow = 'autoplay; fullscreen; encrypted-media';
   iframe.allowFullscreen = true;
   return iframe;
@@ -798,15 +865,8 @@ function createPlayer(videoId) {
   const newIframe = createFreshIframe();
   videoStageContainer.insertBefore(newIframe, videoStageContainer.firstChild);
   const params = {
-    controls: 0,
-    disablekb: 1,
-    modestbranding: 1,
-    rel: 0,
-    showinfo: 0,
-    iv_load_policy: 3,
-    fs: 0,
-    playsinline: 1,
-    enablejsapi: 1,
+    controls: 0, disablekb: 1, modestbranding: 1, rel: 0, showinfo: 0,
+    iv_load_policy: 3, fs: 0, playsinline: 1, enablejsapi: 1,
     origin: window.location.origin
   };
   newIframe.src = `https://www.youtube.com/embed/${videoId}?${new URLSearchParams(params).toString()}`;
@@ -852,7 +912,7 @@ function onPlayerStateChange(e) {
 }
 function onPlayerError(error) {
   console.error('YouTube error:', error);
-  errorTextSpan.innerText = '⚠️ Failed to load video. Invalid ID or restricted content.';
+  errorTextSpan.innerText = '⚠️ Failed to load video.';
   messagePanel.classList.remove('hidden');
   playerReady = false;
   isCreatingPlayer = false;
@@ -938,6 +998,8 @@ function updateVolumeIcon(vol) {
   else if (vol < 40) volumeBtn.innerHTML = '<i class="fas fa-volume-down"></i>';
   else volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
 }
+
+// ---------- Speed & Quality (gear dropdown) ----------
 function changeSpeed() {
   const newSpeed = parseFloat(speedDropdown.value);
   if (!player || !playerReady) return;
@@ -952,6 +1014,80 @@ function changeQuality() {
   else player.setPlaybackQuality(quality);
   showControls();
 }
+speedDropdown.addEventListener('change', changeSpeed);
+qualityDropdown.addEventListener('change', changeQuality);
+
+gearBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  gearContent.classList.toggle('active');
+});
+// Close gear dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!gearDropdown.contains(e.target)) {
+    gearContent.classList.remove('active');
+  }
+});
+
+// ---------- Volume vertical slider interaction ----------
+volumeBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleMute();
+  showControls();
+});
+volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
+// Show vertical slider on hover (desktop) and long‑press (mobile)
+volumeContainer.addEventListener('mouseenter', () => {
+  volumeContainer.classList.add('show-vertical');
+});
+volumeContainer.addEventListener('mouseleave', () => {
+  volumeContainer.classList.remove('show-vertical');
+});
+// For mobile: show on long press of volume button
+volumeBtn.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  volumeContainer.classList.add('show-vertical');
+  setTimeout(() => {
+    if (volumeContainer.matches(':hover') === false) {
+      volumeContainer.classList.remove('show-vertical');
+    }
+  }, 1500);
+});
+
+// ---------- Skip buttons (10s) ----------
+document.getElementById('skipBackBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (player && playerReady) {
+    player.seekTo(Math.max(0, player.getCurrentTime() - 10), true);
+    updateTimeDisplay();
+    showControls();
+  }
+});
+document.getElementById('skipForwardBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (player && playerReady) {
+    player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 10), true);
+    updateTimeDisplay();
+    showControls();
+  }
+});
+
+// ---------- Play / pause ----------
+playPauseBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (player && playerReady) {
+    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+    showControls();
+  }
+});
+overlayVideo.addEventListener('click', (e) => {
+  if (player && playerReady) {
+    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
+    showControls();
+  }
+});
+overlayVideo.addEventListener('dblclick', toggleFullscreen);
+
+// ---------- Fullscreen ----------
 function toggleFullscreen() {
   const container = document.querySelector('#videoPlayerModal .player-card');
   if (!document.fullscreenElement) {
@@ -961,17 +1097,16 @@ function toggleFullscreen() {
   }
   showControls();
 }
-function closeVideoModal() {
-  if (document.fullscreenElement) {
-    document.exitFullscreen();
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+closeModalBtn.addEventListener('click', closeVideoModal);
+window.addEventListener('fullscreenchange', () => {
+  fullscreenBtn.innerHTML = document.fullscreenElement ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
+  if (!document.fullscreenElement) {
+    document.body.style.overflow = '';
+    document.body.offsetHeight;
   }
-  destroyPlayer();
-  modal.classList.add('hidden');
-  if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
-  document.body.style.overflow = '';
-  const leftoverIframe = document.getElementById('youtubeIframe');
-  if (leftoverIframe) leftoverIframe.remove();
-}
+});
+
 // Keyboard shortcuts
 function handleVideoKeys(e) {
   if (modal.classList.contains('hidden')) return;
@@ -1010,49 +1145,17 @@ function handleVideoKeys(e) {
       break;
   }
 }
-
-// ---------- Event listeners ----------
-playPauseBtn.addEventListener('click', () => {
-  if (player && playerReady) {
-    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
-    showControls();
-  }
-});
-document.getElementById('skipBackBtn').addEventListener('click', () => {
-  if (player && playerReady) {
-    player.seekTo(Math.max(0, player.getCurrentTime() - 10), true);
-    updateTimeDisplay();
-    showControls();
-  }
-});
-document.getElementById('skipForwardBtn').addEventListener('click', () => {
-  if (player && playerReady) {
-    player.seekTo(Math.min(player.getDuration(), player.getCurrentTime() + 10), true);
-    updateTimeDisplay();
-    showControls();
-  }
-});
-progressBarBg.addEventListener('click', seekToPosition);
-progressBarBg.addEventListener('mousedown', handleProgressDragStart);
-volumeSlider.addEventListener('input', (e) => setVolume(e.target.value));
-volumeBtn.addEventListener('click', toggleMute);
-fullscreenBtn.addEventListener('click', toggleFullscreen);
-overlayVideo.addEventListener('click', () => {
-  if (player && playerReady) {
-    (player.getPlayerState() === YT.PlayerState.PLAYING) ? player.pauseVideo() : player.playVideo();
-    showControls();
-  }
-});
-overlayVideo.addEventListener('dblclick', toggleFullscreen);
-closeModalBtn.addEventListener('click', closeVideoModal);
 document.addEventListener('keydown', handleVideoKeys);
-window.addEventListener('fullscreenchange', () => {
-  fullscreenBtn.innerHTML = document.fullscreenElement ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
-  if (!document.fullscreenElement) {
-    document.body.style.overflow = '';
-    document.body.offsetHeight;
-  }
-});
+
+function closeVideoModal() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  destroyPlayer();
+  modal.classList.add('hidden');
+  if (controlsHideTimeout) clearTimeout(controlsHideTimeout);
+  document.body.style.overflow = '';
+  const leftoverIframe = document.getElementById('youtubeIframe');
+  if (leftoverIframe) leftoverIframe.remove();
+}
 
 function playVideo(videoId) {
   if (!videoId) {
@@ -1195,11 +1298,7 @@ async function loadLectureForUpdate() {
   try { const res = await fetch(`/api/lectures/${lectureId}`, { credentials: 'include' }); if(!res.ok) throw new Error(); const lec = await res.json(); document.getElementById('update-title').value = lec.title || ''; document.getElementById('update-youtube').value = lec.youtubeId || ''; document.getElementById('update-image').value = lec.imageUrl || ''; document.getElementById('update-pdf').value = lec.pdfLink || ''; document.getElementById('update-dpp').value = lec.dppLink || ''; } catch(e) { showToast("Could not load lecture details.", "error"); }
 }
 async function executeManageAction() {
-  if (!isAdmin) { 
-    showToast("Please login as Admin first", "error"); 
-    hideManageModal(); 
-    return; 
-  }
+  if (!isAdmin) { showToast("Please login as Admin first", "error"); hideManageModal(); return; }
   const confirmBtn = document.querySelector('#manage-modal .bg-blue-600');
   const originalText = confirmBtn.textContent;
   confirmBtn.textContent = 'Processing...';
